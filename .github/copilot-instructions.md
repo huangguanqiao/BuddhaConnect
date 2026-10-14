@@ -1,0 +1,1 @@
+Follow the repository's root AGENTS.md. For article changes read docs/CONTENT_GUIDELINES.md, docs/SOURCE_POLICY.md, docs/BUDDHIST_TERMS.md and docs/PUBLISHING.md. Preserve source/ and use the existing Astro content schema.
