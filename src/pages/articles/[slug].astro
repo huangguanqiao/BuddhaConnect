@@ -1,0 +1,7 @@
+---
+import Base from '../../layouts/Base.astro';import {getCollection,render} from 'astro:content';
+export async function getStaticPaths(){const articles=await getCollection('articles');return articles.map(entry=>({params:{slug:entry.id},props:{entry}}));}
+const {entry}=Astro.props;const {Content}=await render(entry);
+---
+<Base title={`${entry.data.title} · BuddhaConnect`} description={entry.data.description}><article class="article wrap"><a href="/articles/" class="back">← 返回文章</a><p class="eyebrow">{entry.data.category} · {entry.data.date.toLocaleDateString('zh-CN')}</p><h1 class="serif">{entry.data.title}</h1><p class="lead">{entry.data.description}</p><div class="rule"></div><div class="prose"><Content/></div><a class="back bottom" href="/articles/">← 阅读更多文章</a></article></Base>
+<style>.article{max-width:780px;padding-top:75px;padding-bottom:110px}.back{color:#547160;font-size:.88rem;display:inline-block;margin-bottom:48px}.article h1{font-size:clamp(2.2rem,4vw,3.5rem);font-weight:500;line-height:1.5;margin:22px 0}.lead{color:#758078;line-height:2;font-size:1.05rem}.rule{height:1px;background:#dcded4;margin:45px 0}.bottom{margin-top:70px;margin-bottom:0}</style>
