@@ -1,0 +1,5 @@
+---
+const {eyebrow,title,description}=Astro.props;
+---
+<section class="heading"><div class="wrap"><p class="eyebrow">{eyebrow}</p><h1 class="serif">{title}</h1><p class="desc">{description}</p></div></section>
+<style>.heading{padding:80px 0 72px;background:#eaece5;text-align:center}.heading h1{font-size:clamp(2.4rem,5vw,4rem);font-weight:500;margin:18px 0}.desc{color:#617169;max-width:650px;line-height:1.9;margin:auto}@media(max-width:700px){.heading{padding:60px 0}}</style>
