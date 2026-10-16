@@ -3,7 +3,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://code.buddhaconnect.com',
+  site: 'https://buddhaconnect.com',
   output: 'static',
   integrations: [sitemap()],
   vite: { plugins: [tailwindcss()] },
