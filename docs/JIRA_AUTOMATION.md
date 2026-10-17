@@ -79,3 +79,5 @@ End-to-end acceptance requires a separately approved live Production Publish wit
 ## PR and Ticket naming
 
 New PRs use `[type][BUD-N] Clear English action` rather than the older `[BUD-N] type: ...`. Supported types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `content`. The source Branch must contain the same `BUD-N`. Jira Summary uses `[Area] English action` (Jira displays the issue key separately). The trusted `jira-pr-gate.yml` enforces the PR title syntax; `jira-pr-activity.yml` reads the same key. GitHub releases use a separate Promotion naming format. See `docs/JIRA_WORKFLOW.md` for examples.
+
+**Migration note:** PR #20 used the previous `[BUD-N] type: ...` title to bootstrap the new trusted-base gate. All newly opened PRs should use `[type][BUD-N] English action`. Past PRs retain their original titles as historical evidence; reopening a legacy PR may require retitling it to meet the current gate.
