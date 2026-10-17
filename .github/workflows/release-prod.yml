@@ -67,5 +67,73 @@ jobs:
           keep_files: false
           commit_message: 'release: promote UAT ${{ steps.uat.outputs.source_sha }} (run ${{ steps.uat.outputs.run_id }})'
 
+      - name: Create dated Promotion release record
+        uses: actions/github-script@v7
+        env:
+          UAT_SOURCE_SHA: ${{ steps.uat.outputs.source_sha }}
+          UAT_RUN_ID: ${{ steps.uat.outputs.run_id }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = process.env.UAT_SOURCE_SHA;
+            const uatRun = process.env.UAT_RUN_ID;
+            const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
+              timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit', day: '2-digit'
+            }).formatToParts(new Date()).filter(p => p.type !== 'literal').map(p => [p.type, p.value]));
+            const date = [parts.year, parts.month, parts.day].join('-');
+            const tag = 'prd-' + date + '-run-' + context.runNumber;
+            const { data: production } = await github.rest.repos.getBranch({ owner, repo, branch: 'production' });
+            const productionSha = production.commit.sha;
+            let previousSource = null;
+            try {
+              const { data: previous } = await github.rest.repos.getLatestRelease({ owner, repo });
+              previousSource = previous.body?.match(/UAT_SOURCE_SHA: ([0-9a-f]{40})/)?.[1] || null;
+            } catch (error) { if (error.status !== 404) throw error; }
+            const prs = new Map();
+            const commits = [];
+            if (previousSource && previousSource !== sha) {
+              try {
+                const { data: comparison } = await github.rest.repos.compareCommits({
+                  owner, repo, base: previousSource, head: sha, per_page: 100
+                });
+                commits.push(...comparison.commits);
+                if (comparison.total_commits > 100) core.warning('PR list may be incomplete; see compare link.');
+              } catch (error) { core.warning('Compare unavailable: ' + error.message); }
+            } else commits.push({ sha });
+            for (const commit of commits) {
+              try {
+                const { data: associated } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                  owner, repo, commit_sha: commit.sha
+                });
+                for (const pr of associated) if (pr.merged_at) prs.set(pr.number, pr);
+              } catch (error) { core.warning('PR lookup unavailable: ' + error.message); }
+            }
+            const summaries = [...prs.values()].sort((a,b) => a.number - b.number)
+              .map(pr => '- ' + pr.title + ' — ' + pr.html_url);
+            const sourceLink = previousSource
+              ? 'https://github.com/' + owner + '/' + repo + '/compare/' + previousSource + '...' + sha
+              : 'https://github.com/' + owner + '/' + repo + '/commit/' + sha;
+            const body = [
+              '## Description',
+              ...(summaries.length ? summaries : ['- See source changes linked below.']),
+              '',
+              '## Deployment information',
+              '- **Status:** Pushed to production branch; Hostinger verification pending',
+              '- **UAT:** https://code.buddhaconnect.com',
+              '- **Production:** https://buddhaconnect.com',
+              '- **UAT run:** https://github.com/' + owner + '/' + repo + '/actions/runs/' + uatRun,
+              '- **Source changes:** ' + sourceLink,
+              '- **Production commit:** ' + productionSha,
+              '- **Rollback:** Actions > Rollback Production to previous release',
+              '',
+              'UAT_SOURCE_SHA: ' + sha
+            ].join('\\n');
+            const { data: release } = await github.rest.repos.createRelease({
+              owner, repo, tag_name: tag, target_commitish: productionSha,
+              name: '[Promotion] PRD ' + date, body, draft: false, prerelease: false
+            });
+            core.info('Promotion record: ' + release.html_url);
+
       - name: Deployment note
         run: echo 'Production branch updated. Verify Hostinger has synchronized that branch and test the live website.'
