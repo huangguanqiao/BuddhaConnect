@@ -83,3 +83,7 @@ The repository may not currently have enforceable branch restrictions; documenti
 - **Confluence mirror:** update the policy index and explanation only after merge. Record the authoritative source files and merged commit. If the sync cannot be completed, leave Jira open/record Pending Sync.
 - **Conflict resolution:** GitHub normative text wins for engineering controls, Jira wins for ticket requirements and acceptance. Never make editable Confluence prose a second independent engineering policy.
 - **Periodic audit:** after each material policy change, verify GitHub links, current Confluence commit marker, active Jira ticket links, permissions, required checks and any Pending Sync items. Full scheduled sync is a separate automation task, not assumed active here.
+
+## 9. Reuse in other projects
+
+Reusable governance starter kit: [docs/templates/README.md](templates/README.md). Copy the template into the destination project's **own** repository, fill its Jira key, GitHub branches, test/release endpoints, approval authorities and Confluence space, then create an issue in that destination project before making further changes. The kit is a portable **starting point**, not a claim that BuddhaConnect settings or secrets apply elsewhere. Do not automatically reuse BUD issue keys, statuses, websites, webhook credentials or Production rules in another project.
