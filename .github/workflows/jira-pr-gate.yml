@@ -1,0 +1,64 @@
+name: Jira issue gate
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited, ready_for_review]
+    branches: [master]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  jira-gate:
+    name: Verify BUD issue and PR identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify PR naming and optionally live Jira issue
+        uses: actions/github-script@v7
+        env:
+          JIRA_EMAIL: ${{ vars.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_STRICT_CHECK: ${{ vars.JIRA_STRICT_CHECK }}
+        with:
+          script: |
+            // pull_request_target runs the trusted BASE workflow. Never checkout or execute PR code here.
+            const pr = context.payload.pull_request;
+            const titleKey = pr.title.match(/^\[(BUD-\d+)\]/)?.[1];
+            const branchKey = pr.head.ref.match(/(?:^|[\/_-])(BUD-\d+)(?=$|[\/_-])/i)?.[1]?.toUpperCase();
+            if (!titleKey || !branchKey || titleKey !== branchKey) {
+              core.setFailed('PR title and branch must reference the same real Jira key: [BUD-123] feat: ... and BUD-123-feature-name.');
+              return;
+            }
+            core.info('PR title and branch reference ' + titleKey);
+            const email = process.env.JIRA_EMAIL;
+            const token = process.env.JIRA_API_TOKEN;
+            if (!email || !token) {
+              if (process.env.JIRA_STRICT_CHECK === 'true') {
+                core.setFailed('Jira live verification required but JIRA_EMAIL or JIRA_API_TOKEN is missing.');
+              } else {
+                core.warning('Jira live verification NOT configured. Only PR key syntax was verified. Configure secrets/vars and JIRA_STRICT_CHECK=true.');
+              }
+              return;
+            }
+            const auth = Buffer.from(email + ':' + token).toString('base64');
+            const url = 'https://huangguanqiao.atlassian.net/rest/api/3/issue/' + titleKey + '?fields=status,project';
+            const response = await fetch(url, {
+              headers: { Authorization: 'Basic ' + auth, Accept: 'application/json' },
+              signal: AbortSignal.timeout(15000)
+            });
+            if (!response.ok) {
+              core.setFailed('Unable to verify Jira ' + titleKey + ' (HTTP ' + response.status + ').');
+              return;
+            }
+            const issue = await response.json();
+            if (issue.fields.project.key !== 'BUD') {
+              core.setFailed('Jira issue is not in the BUD project.');
+              return;
+            }
+            if (issue.fields.status.statusCategory.key === 'done') {
+              core.setFailed('Jira ' + titleKey + ' is terminal (' + issue.fields.status.name + '). Open a NEW linked ticket for follow-up work.');
+              return;
+            }
+            core.info('Jira issue verified: ' + titleKey + ', status ' + issue.fields.status.name);
