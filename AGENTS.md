@@ -7,7 +7,7 @@ This is the canonical onboarding entry point for ChatGPT, Claude Code, Codex, Ge
 2. Read docs/ARCHITECTURE.md, docs/CURRENT_STATE.md and docs/DECISIONS.md.
 3. For writing or editing articles, also read docs/CONTENT_GUIDELINES.md, docs/SOURCE_POLICY.md, docs/BUDDHIST_TERMS.md and docs/PUBLISHING.md.
 4. Inspect actual code and the latest target branch before changing anything. Repository files override stale documentation; update documentation when discrepancies are found.
-5. Check related issues and open PRs if accessible. Never claim to have checked an external system you cannot access.
+5. Check the existing Jira BUD issues and open PRs before any modification. An applicable Jira issue is mandatory; create one first if needed. Never claim to have checked an external system you cannot access.
 
 ## Hard rules
 - Preserve `source/` unchanged unless the project owner explicitly authorizes changes.
@@ -45,3 +45,31 @@ In each PR include purpose, changed files, checks performed, sources verified fo
 - Generate or refine AI Prompt after inspecting the real project files; clearly distinguish proposed actions from completed actions.
 - For each completed change, update both language versions of the Jira description when its requirements or implementation notes change. Preserve source links and meaningful context.
 - Follow [docs/JIRA_WORKFLOW.md](docs/JIRA_WORKFLOW.md) for field examples, promotion tracing and collaboration conventions.
+
+## Mandatory ticket-first change control (all agents and humans)
+- **No Jira ticket, no modification.** Before changing code, content, copy, metadata, images, configuration, deployment workflows or project documentation, search for an existing applicable `BUD-XX` issue. This includes a one-word typo fix, a one-line CSS edit and AI-authored content. Reading, discussing and researching without making a change do not require a new issue.
+- Reuse an existing issue only when the new change fits its explicit objective, scope, acceptance criteria and ownership. Add the change to its Chinese Description and equivalent English Description if the agreed scope evolves; do not silently expand a ticket beyond its intent.
+- If none applies, **create a Jira Task, Bug or Story first**, according to the work type; write Chinese Description plus corresponding English Description. Then create the branch and PR using that actual issue key. Never invent an ID or retroactively present an untracked change as ticketed.
+- **Batch small edits by coherent purpose, not date alone.** Several tiny wording, spelling, punctuation or terminology fixes can share one issue and PR when they concern the same page, content batch, module, goal and review/acceptance cycle (often one day's work). List each affected page/file and examples in the issue/PR. Do not bundle unrelated features, behavior changes, security fixes, risky deployments or separately testable items just because they occurred the same day. Create a new issue for a distinct goal or future batch; use an Epic/parent to group related tickets when useful.
+- For example, five small homepage text corrections in one review batch may use one `chore(copy)` Task; a payment-flow bug and a scripture translation correction require separate tickets. A trivial edit may have lightweight criteria/tests, but still requires an issue, branch, PR and factual handoff.
+- If Jira cannot be reached, **stop before modifying** and report the blocker; ask the owner before any emergency exception. For an explicitly approved incident requiring an immediate repair, document the exception transparently, create/backfill a proper Jira issue as soon as access returns, and link all commits/PRs. Never pretend the normal sequence was followed.
+- Do not auto-create duplicate tickets every time an agent continues an existing task; each meaningful delivery increment uses its relevant existing issue unless the scope differs.
+
+## Mandatory Jira activity comments (English)
+- Log each **meaningful milestone** in the relevant Jira issue: work started/handoff, substantive implementation, PR creation/merge, testing and UAT result, blocker/decision, approved Production deployment and live verification, rollback, or final completion. Do not spam comments for each file save, token, tool call or inconsequential edit.
+- Format each comment as a short, human-readable work log using the template in `docs/JIRA_WORKFLOW.md`. Include **Date** (actual YYYY-MM-DD HH:mm plus IANA timezone or UTC offset), **Performed by** (actual human/agent/system), **Action**, **Summary**, **Changes**, **Testing**, **References** and **Next Step**. Use `Not run` or `Not applicable` where accurate; never fabricate outcomes.
+- The Jira **comment author** is the actual connected Atlassian account. The `Performed by` field identifies who truly performed the work; when another agent merely reports it, include `Reported by` separately. Never imply a separate Jira login, tool access, review, test or deployment that did not occur.
+- Use consistent performer names (e.g. `ChatGPT`, `Codex`, `Claude Code`, `Gemini`, `Human / Project Owner`, `GitHub Actions`). When authorship cannot be established, write `Unknown / not independently verified`, not a guess. Attribute joint efforts explicitly.
+- Use only observed timestamps/timezones and evidence. For deployment events distinguish `pushed to production branch`, `Hostinger synchronization pending` and `verified live`. A GitHub job succeeding is not automatically proof of a live website.
+- Prefer concise objective statements: what was actually changed, checks run and their results, links to PR/commit/release, risks and next action. Do not paste the full diff, duplicate the entire Description/AI Prompt, expose secrets, or modify/delete old activity comments as normal practice.
+- Update the `Pull Requests` field with consolidated feature/release references as appropriate; **Comments** preserve the chronological narrative. Keep both descriptions synchronized when scope, acceptance or final implementation materially changes. A comment does not replace a required ticket, PR, test or approval.
+- After a successfully saved Jira comment or field update, confirm the result before reporting success. If the write fails, report the unlogged action and retry safely; do not falsely claim an audit record exists.
+
+## Full delivery checklist
+1. Locate or create the matching `BUD-XX` before touching files; avoid duplicate or unrelated issue grouping.
+2. Review bilingual requirements and existing architecture; generate ticket-specific English AI Prompt when appropriate.
+3. Implement on a dedicated, Jira-keyed branch; commit and open a Jira-keyed PR. Never directly edit the Production branch.
+4. Run relevant checks; record actual results in Jira Comments, with genuine performer/time attribution.
+5. Merge to `master` with review; validate Preview/UAT separately and log the result.
+6. Obtain explicit owner approval before Production Publish or Rollback, and verify live site before declaring production completion.
+7. Preserve feature PR, release and rollback history in Jira; transition status to Done only on the ticket's applicable acceptance evidence.
