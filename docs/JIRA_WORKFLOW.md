@@ -248,3 +248,13 @@ If filters work independently: no Blocks link; use Relates only if helpful.
 
 The key syntax uses a hyphen (`BUD-20`), **not** a tilde (`BUD~20`). Existing historical PRs do not need renaming. Done tickets must not be reused for new work.
 
+
+
+## Publishing policy: GitHub canonical and Confluence mirror
+
+- Engineering policy starts with `AGENTS.md` and `docs/ENGINEERING_GOVERNANCE.md` in GitHub `master`. Jira remains the requirements/acceptance source of truth; Confluence BC Space provides a readable index, examples and fixed-commit provenance.
+- For a policy change: first find/create a BUD issue, update GitHub in a PR, validate and merge; then update Confluence **after** knowing the merge commit. Confluence must state the canonical source links, merged commit and Last Synced date.
+- If Confluence update fails, append a Jira `Pending Sync` Comment and retry the same Confluence page by its content ID; do not create duplicates or claim parity.
+- Do not modify terminal historical Jira Descriptions as part of publishing policy; add native issue links and factual English Comments instead.
+- Risk gates: AI auto-merge is permissible for low-risk changes **only under explicit owner delegation and required checks**. High-risk CI/CD, auth, security, secrets, permissions, Production infrastructure and large editorial imports require explicit human source-merge approval. Production Publish and Rollback require explicit owner approval irrespective of PR risk.
+- See `docs/ENGINEERING_GOVERNANCE.md` for authoritative decision and exception rules.
