@@ -163,5 +163,60 @@ jobs:
             });
             core.info('Promotion record: ' + release.html_url);
 
+
+      - name: Verify Hostinger live site matches published UAT artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import { createHash } from 'node:crypto';
+          const url = 'https://buddhaconnect.com/';
+          const expected = await readFile('release-dist/index.html');
+          const digest = buffer => createHash('sha256').update(buffer).digest('hex');
+          const expectedHash = digest(expected);
+          const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+          let passed = false;
+          let lastError = '';
+          for (let attempt = 1; attempt <= 15; attempt++) {
+            try {
+              const response = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(12000), headers: { 'Cache-Control': 'no-cache' } });
+              if (!response.ok) throw new Error('Homepage HTTP ' + response.status);
+              const liveHtml = Buffer.from(await response.arrayBuffer());
+              const liveHash = digest(liveHtml);
+              if (liveHash !== expectedHash) throw new Error('Live homepage differs from promoted UAT artifact (expected ' + expectedHash.slice(0, 12) + ', got ' + liveHash.slice(0, 12) + ')');
+              const html = liveHtml.toString('utf8');
+              const assets = [...new Set([...html.matchAll(/(?:src|href)=["']([^"']+\/_astro\/[^"']+)["']/g)].map(match => match[1]))].slice(0, 6);
+              if (!assets.length) {
+                const fallback = [...new Set([...html.matchAll(/(?:src|href)=["'](\/_astro\/[^"']+)["']/g)].map(match => match[1]))];
+                assets.push(...fallback.slice(0, 6));
+              }
+              if (!assets.length) throw new Error('No _astro static assets referenced by homepage');
+              for (const asset of assets) {
+                const link = new URL(asset, url);
+                const resource = await fetch(link, { redirect: 'follow', signal: AbortSignal.timeout(10000) });
+                if (!resource.ok) throw new Error('Missing asset ' + link.pathname + ': HTTP ' + resource.status);
+                await resource.arrayBuffer();
+              }
+              console.log('Verified live Hostinger HTML is byte-identical to promoted UAT index.html; ' + assets.length + ' assets returned HTTP 2xx.');
+              passed = true;
+              break;
+            } catch (error) {
+              lastError = error.message;
+              console.log('Hostinger verification attempt ' + attempt + '/15: ' + lastError);
+              if (attempt !== 15) await sleep(20000);
+            }
+          }
+          if (!passed) {
+            console.error('::error::Production may already be deployed but was NOT verified: ' + lastError + '. Investigate Hostinger sync and site response. Do not automatically rollback.');
+            process.exitCode = 1;
+          }
+          NODE
+
+      - name: Record live verification outcome
+        if: always()
+        run: |
+          echo 'Production Publish changes production branch. The separate live verification step must pass before declaring the deployment verified.' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Deployment note
         run: echo 'Production branch updated. Verify Hostinger has synchronized that branch and test the live website.'
