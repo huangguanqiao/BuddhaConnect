@@ -1,0 +1,93 @@
+name: Jira PR activity log
+
+on:
+  pull_request_target:
+    types: [opened, closed]
+    branches: [master]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  jira-activity:
+    name: Record PR milestone
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Append deduplicated Jira activity comment
+        uses: actions/github-script@v7
+        env:
+          JIRA_EMAIL: ${{ vars.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        with:
+          script: |
+            // Trusted pull_request_target base workflow: NEVER check out or execute PR code.
+            const email = process.env.JIRA_EMAIL;
+            const token = process.env.JIRA_API_TOKEN;
+            if (!email || !token) {
+              core.warning('Jira integration not configured: PR activity was not written to Jira.');
+              return;
+            }
+            const pr = context.payload.pull_request;
+            const key = pr.title.match(/^\[(BUD-\d+)\]/)?.[1];
+            if (!key) {
+              core.warning('PR title has no BUD key; Jira issue gate is responsible for rejecting this PR.');
+              return;
+            }
+            const action = context.payload.action;
+            const eventKind = action === 'closed' ? (pr.merged ? 'merged' : 'closed-unmerged') : 'opened';
+            const marker = '[github-pr-event:' + context.repo.owner + '/' + context.repo.repo + '#' + pr.number + ':' + eventKind + ']';
+            const base = 'https://huangguanqiao.atlassian.net/rest/api/3/issue/' + key;
+            const headers = {
+              Authorization: 'Basic ' + Buffer.from(email + ':' + token).toString('base64'),
+              Accept: 'application/json',
+              'Content-Type': 'application/json'
+            };
+            const issueResponse = await fetch(base + '?fields=status,project', { headers, signal: AbortSignal.timeout(15000) });
+            if (!issueResponse.ok) {
+              core.setFailed('Jira issue lookup failed with HTTP ' + issueResponse.status);
+              return;
+            }
+            const issue = await issueResponse.json();
+            if (issue.fields.project.key !== 'BUD') {
+              core.setFailed('Issue does not belong to BUD.');
+              return;
+            }
+            // Only report PR activity, never modify ticket requirements or automatically mark Done.
+            const commentsUrl = base + '/comment?maxResults=100';
+            let startAt = 0;
+            while (true) {
+              const lookup = await fetch(commentsUrl + '&startAt=' + startAt, { headers, signal: AbortSignal.timeout(15000) });
+              if (!lookup.ok) throw new Error('Cannot inspect existing Jira activity logs (HTTP ' + lookup.status + ')');
+              const page = await lookup.json();
+              const found = (page.comments || []).some(comment => JSON.stringify(comment.body || {}).includes(marker));
+              if (found) {
+                core.info('Milestone already recorded: ' + marker);
+                return;
+              }
+              startAt += page.comments.length;
+              if (!page.comments.length || startAt >= page.total) break;
+            }
+            const created = new Date().toISOString();
+            const text = [
+              'Activity: ' + (eventKind === 'merged' ? 'Code Merged' : eventKind === 'opened' ? 'Pull Request Created' : 'Pull Request Closed'),
+              'Date: ' + created + ' UTC',
+              'Performed by: GitHub user ' + pr.user.login + ' (' + eventKind + ' PR)',
+              'Reported by: GitHub Actions',
+              'Summary: PR #' + pr.number + ' ' + eventKind + ' in GitHub.',
+              'Changes: See the linked PR. No claim of UAT or Production acceptance.',
+              'Testing: See GitHub PR status checks; not independently verified by this log.',
+              'References: ' + pr.html_url,
+              'Next Step: ' + (eventKind === 'merged' ? 'Verify UAT and record acceptance separately.' : eventKind === 'opened' ? 'Complete PR review and required checks.' : 'Review whether the work should be continued or replaced.'),
+              marker
+            ].join('\n');
+            const body = { body: { type: 'doc', version: 1, content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] } };
+            const written = await fetch(base + '/comment', {
+              method: 'POST', headers, body: JSON.stringify(body), signal: AbortSignal.timeout(15000)
+            });
+            if (!written.ok) {
+              core.setFailed('Failed to write Jira activity comment: HTTP ' + written.status);
+              return;
+            }
+            core.info('Recorded milestone on ' + key + ': ' + marker);
