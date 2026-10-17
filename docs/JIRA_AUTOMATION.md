@@ -63,3 +63,14 @@ These rules cannot be assumed active merely because workflows exist. In **GitHub
 - Enable GitHub Ruleset required checks only after they exist and run green; verify a malformed PR is blocked.
 - Confirm Production environment approval/branch rules without disabling manual Publish/Rollback.
 - With explicit owner approval, perform a low-risk Production release and verify that the Hostinger live smoke check passes; never use a test release without that approval.
+
+
+## Verified Production Release → Jira evidence (BUD-13)
+
+The trusted `.github/workflows/jira-production-audit.yml` runs **only after the manual Production Publish workflow completes successfully**. It finds that exact run's GitHub Release by the `-run-N` tag suffix, requires the Release to say `Verified live on Hostinger`, and extracts BUD keys from the actual merged PR summaries included in the Release.
+
+For each matching ticket, it writes a single English Production Deployment Comment including the Release URL/tag, workflow run and verified Hostinger smoke result. The comment carries a deterministic `github-production-release` marker for best-effort deduplication and leaves original Jira descriptions untouched, even if an issue is Done.
+
+**This does not mark Jira Done**, update the ticket's `Pull Requests` field, or infer missing PR/Jira relationships. If the GitHub Release contains no PRs with recognizable BUD keys, no associations are invented. Missing Jira credentials result in a warning, not a claim that records were written. A successful GitHub Release does not prove the Jira automation has run.
+
+End-to-end acceptance requires a separately approved live Production Publish with configured Jira credentials and confirmation that the appropriate Jira Comment exists. Review the GitHub Actions job logs for any failures.
