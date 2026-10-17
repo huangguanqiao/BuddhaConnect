@@ -73,3 +73,22 @@ In each PR include purpose, changed files, checks performed, sources verified fo
 5. Merge to `master` with review; validate Preview/UAT separately and log the result.
 6. Obtain explicit owner approval before Production Publish or Rollback, and verify live site before declaring production completion.
 7. Preserve feature PR, release and rollback history in Jira; transition status to Done only on the ticket's applicable acceptance evidence.
+
+
+## Completed issue protection and change requests
+- Treat Jira issues in **Done** or **Closed** (or another actual terminal state) as a **frozen historical baseline**. Do not modify their original **Description**, **English Description**, **AI Prompt**, acceptance criteria or previous feature/release records as routine follow-up work.
+- For a **new enhancement**, **post-completion bug**, **wording revision**, or **change request**, search existing issues, then **create a new Story / Bug / Task** before changing files. State what differs from the completed original, why, affected scope, acceptance criteria and expected risk. Link the new issue to the original with a native Jira link (usually **Relates**). A Change Request is a concept; it does not require adding a custom Jira issue type.
+- On the original completed issue, only add an accurate follow-up **Comment** and native **Issue Link**, as needed. Preserve its existing release and Pull Requests history. Do not reassign its old PR or overwrite it with the new delivery's records.
+- **Exception:** An erroneous Done transition, essential factual correction or compliance-driven amendment may justify reopening or editing the original issue, but only with explicit owner approval, a reason recorded in Jira Comments and an auditable change history. Never quietly reopen or rewrite it.
+- Closing a ticket does **not** mean all future related development is prohibited: it means **new scope gets a new linked ticket**. Avoid reopening merely to append an enhancement.
+
+## Native Jira links, hierarchy, priority and dependencies
+- **Before creating or implementing an issue**, inspect related completed/original features, open Bugs, existing similar Tickets, parent/Epic links, blockers and duplicate issues. Use Jira's **native issue links**, not only links pasted into Comments or Description. Only create a link when its relationship is real and supported by evidence.
+- Supported link types must be discovered from the Jira site rather than assumed. Current BUD Jira site types verified: **Blocks**, **Relates**, **Duplicate**, **Cloners**. Jira **Parent/Epic** relationship is hierarchy, **not** an issue link; use the parent field when there is genuine decomposition.
+- **Relates**: subsequent enhancements or Bugs referring to an original feature, and meaningful peer-to-peer connections without a stronger, provable dependency.
+- **Blocks**: actual execution, testing or release prerequisite. Direction matters: if A must finish before B can proceed, record **A blocks B** / **B is blocked by A**. Never reverse the direction; don't invent a blocker simply because issues are related.
+- **Duplicate**: genuine duplicate request/defect; designate the original canonical issue and note why. **Cloners** only for genuine copies/clones, not normal enhancements.
+- **Priority** expresses urgency/importance through Jira's native **Priority** field. It is **not** equivalent to dependencies or task order. Higher priority does not automatically block lower priority work. When priority affects scheduling, describe why in the ticket.
+- When relevant blockers remain unresolved, clearly show **Blocked** in the working notes/Comments and avoid advancing to Ready for Release or Done contrary to acceptance; if the actual workflow lacks a Blocked state, retain the valid status and document the blocking issue key.
+- For multi-ticket work, use an **Epic/parent** for a real shared deliverable, direct Blocks links for prerequisites, and Relates links for related but independent work. Be selective: don't indiscriminately link every issue in the same project.
+- Add links **when creating the new related issue or when discovering the relationship**, verify both issue keys and link direction, and mention the linkage in an English activity Comment. Confirm server success. If native links cannot be created, report the limitation rather than claiming they exist.

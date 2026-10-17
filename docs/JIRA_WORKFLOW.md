@@ -175,3 +175,58 @@ Next Step: <actual next action>
 ~~~
 
 These edits can share one ticket **only when they are genuinely one review scope**. Merely listing several files does not justify combining unrelated tasks.
+
+
+## Completed tickets: immutable history and new change requests
+
+**Done / Closed = frozen historical acceptance baseline.** Preserve the original Chinese Description, English Description, AI Prompt, recorded delivery details and historical Pull Requests/release entries. A future request creates a new linked Jira issue, **even if the enhancement is very small**. Apply the existing no-ticket-no-change rule before any file edits.
+
+- A new feature or enhancement after Done → new **Story** (or suitable Task), native **Relates** to original feature.
+- A later defect discovered after Done → new **Bug**, native **Relates** to original feature; do not retroactively rewrite old acceptance results.
+- A new copy refinement after Done → new **Task**, native **Relates** if it changes or extends that completed original. Several coherent minor edits can share this **new** Task under the existing batching rules.
+- Accidental closure or material historical correction → request explicit owner approval to reopen/edit; record who approved it, what changed and why in a new Jira Comment. Preserve earlier evidence.
+- A Jira Comment or native link may be appended to the original Done Ticket to point to follow-up work. Do **not** overwrite the closed issue's descriptions just to mention the new ticket.
+
+### Native issue links and accurate direction
+
+BuddhaConnect's configured Jira issue link types were checked and include **Blocks**, **Relates**, **Duplicate**, and **Cloners**. Read site metadata before linking instead of assuming types or direction.
+
+| Relationship | Native mechanism | When to use |
+| --- | --- | --- |
+| Follow-up enhancement of original feature | Relates | BUD-21 relates to BUD-20 (example only) |
+| Bug affecting original feature | Relates | New Bug relates to original feature |
+| A must complete before B can proceed | Blocks | **A blocks B**; on B display **is blocked by A** |
+| Two Jira issues cover the same work | Duplicate | Link the true duplicate and keep a canonical issue |
+| One issue is an actual copy of another | Cloners | Only when cloning has really occurred |
+| Large feature divided into deliverables | Parent / Epic | Use Jira hierarchy, not an arbitrary issue link |
+| Business urgency or scheduling importance | Priority field | Use Highest / High / Medium / Low / Lowest as available, with rationale when important |
+
+**Don't misuse Blocks.** B being related to A, or A having higher Priority, does not prove B is blocked by A. Use Blocks only for a concrete prerequisite that affects implementation, verification or release. Before changing status, inspect unresolved blockers; don't claim an issue is ready for release or accepted if its actual acceptance depends on an unfinished issue.
+
+**Link creation checklist:** search existing tickets → identify the original/parent/blocker → choose the strongest truthful relation → check exact issue keys → check Blocks direction → create the native link → confirm it exists → log a short English Comment. Avoid duplicate/spurious links and avoid altering completed descriptions.
+
+### Illustrative change request example
+
+~~~text
+Original ticket: BUD-20 — Add Virtual Wooden Fish — Done
+New ticket: BUD-21 — Add Auto-Tapping Mode — To Do
+Relationship: BUD-21 relates to BUD-20
+
+BUD-21 change details:
+- Previous behavior: manual tapping and audio.
+- Requested change: optional auto-tapping mode.
+- Why: make repetitive practice easier.
+- Acceptance: new control can start/stop auto-tapping; existing manual tapping remains intact.
+- Impact: UI behavior and sound control.
+~~~
+
+These keys are illustrative, not actual tickets. On **BUD-20**, add a short Comment such as "Follow-up enhancement tracked in BUD-21" only after creating the real issue and confirming its link. Leave the old Description and English Description untouched.
+
+### Example: priority is not dependency
+
+~~~text
+BUD-31 (High Priority) — Improve search results
+BUD-32 (Medium Priority) — Add search filters
+If filters require the improved search API: BUD-31 blocks BUD-32.
+If filters work independently: no Blocks link; use Relates only if helpful.
+~~~
