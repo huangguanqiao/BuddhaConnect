@@ -65,3 +65,11 @@ The workflow checks that a requested tag corresponds to a published GitHub Relea
 - Only trusted maintainers should be permitted to publish. The production job uses a GitHub Environment named `production`; configure reviewers and branch restrictions according to your plan's support.
 - GitHub workflow permissions must allow Actions to write repository contents for the `production` branch. Review branch protection/rulesets and GitHub Actions workflow permissions if publication fails.
 - Check GitHub Pages and Environment features before converting the repository from Public to Private under GitHub Pro.
+
+## CI/CD reliability hardening
+
+- Publishing requires the latest successful GitHub Pages deployment to match the current `master` commit. If a new merge occurs before or during publication, the Production workflow stops, rather than silently publishing an untested build.
+- Before writing to `production`, the workflow rechecks that the same UAT run remains the latest and succeeded.
+- Rollback run summaries safely escape literal Markdown backticks, avoiding accidental Bash command substitution after production has already changed.
+- This repository currently lacks `package-lock.json`, so UAT temporarily continues using `npm install`. To generate a real lockfile using npm's dependency resolver, run **Generate reproducible npm lockfile** once via GitHub Actions on `master`. The workflow pushes `chore/npm-lockfile`, to be reviewed and merged with a PR. Then update UAT to `npm ci --no-audit --no-fund`. Do not switch UAT to `npm ci` before the lockfile is committed.
+- Changing the workflows alone does not run Publish or Rollback. Verify the next UAT deployment and test a safe release before relying on the new checks.
