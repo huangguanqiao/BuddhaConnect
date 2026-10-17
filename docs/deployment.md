@@ -45,22 +45,18 @@ GitHub > Releases. Rollback does not rewrite or delete past Release records.
 5. Verify how Hostinger handles overwritten and deleted files, whether auto-deploy truly triggers on `production` updates, and whether any webhook requires configuration. If needed, perform a Hostinger Git pull/deploy manually until auto-deploy is verified.
 6. Keep UAT on GitHub Pages throughout. Avoid serving production from a directory also managed by another Git integration.
 
-## Rollback
+## Rollback: previous or any retained Promotion Release
 
-Production is now published with `force_orphan: false`, preserving the previous file snapshot as the parent commit. After a new UAT-tested build is published with this configuration, the previous Production snapshot becomes eligible for rollback.
+Open GitHub > Actions > **Rollback Production (previous or Release Tag)**, choose branch `master`, and select one of these modes:
 
-One-click rollback procedure:
+- **previous** (default): no tag required; restore the immediately preceding Production commit's complete file tree. A second rollback may restore the version you just rolled back from.
+- **release_tag**: copy an exact `prd-YYYY-MM-DD-run-N` tag from [GitHub Releases](https://github.com/huangguanqiao/BuddhaConnect/releases), paste it into `release_tag`, then click Run workflow. The selected Release's complete original static files are restored.
 
-1. Open GitHub > Actions > **Rollback Production to previous release**.
-2. Choose `master` and click **Run workflow**. There are no SHA or version inputs.
-3. The workflow reads the previous commit on the `production` branch, creates a **new production commit** containing exactly the previous commit's files, and pushes it to `production`.
-4. Hostinger should automatically sync the updated branch. Verify `buddhaconnect.com` and its assets. UAT remains unchanged.
+The workflow checks that a requested tag corresponds to a published GitHub Release, belongs to the current Production Git history, includes `index.html` and Astro static assets, and differs from the current Production snapshot. It then creates a **new** commit on `production` containing the selected snapshot's file tree. It never rewrites Git history, merges source code, or changes UAT. Hostinger should automatically sync this update, but you must confirm the live site's pages and assets afterward.
 
-The rollback uses the **previous production commit**, not an earlier UAT build. It refuses to run if no parent snapshot exists, or if the previous snapshot has identical file contents. Running rollback a second time can restore the version that was current immediately before the first rollback (toggle behavior).
+**Limitations:** Only releases whose tagged Production commits are still reachable in the current branch history can be selected. Older deployments created by `force_orphan: true` may have no available history or tag. The default `previous` option restores the preceding *commit*, which may itself be a rollback rather than a standard promotion. GitHub Releases are used as immutable version selectors here; never repoint or delete a tagged Release you might need for recovery. Files and database changes outside the versioned static website are not reverted.
 
-**Migration warning:** The old deployment configuration used `force_orphan: true`, which discarded production branch ancestry. The currently live production version does **not** have an available parent from earlier releases. To test rollback, first publish a *new* UAT-tested change after this PR is merged. That publish will preserve today's live version as the previous snapshot. Then run the Rollback workflow to restore it.
-
-Git history on `production` is retained going forward, but keep periodic backups or immutable tagged releases for disaster recovery. This workflow restores versioned Git files; check Hostinger synchronization and any files outside the repository separately.
+**Safety:** Rollback is an intentional Production write. Its Action run should be restricted to trusted maintainers. An error/no-op leaves Production unchanged. Review the GitHub Action summary and confirm Hostinger's actual deployment afterward. No additional Build step is involved.
 
 ## Operational considerations
 
