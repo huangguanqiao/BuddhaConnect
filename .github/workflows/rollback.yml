@@ -105,9 +105,9 @@ jobs:
           git push origin "$NEW_COMMIT:refs/heads/production"
           {
             echo "## Production rollback"
-            echo "- Restored: `$LABEL`"
-            echo "- Snapshot commit: `$TARGET`"
-            echo "- New Production commit: `$NEW_COMMIT`"
+            echo "- Restored: \`$LABEL\`"
+            echo "- Snapshot commit: \`$TARGET\`"
+            echo "- New Production commit: \`$NEW_COMMIT\`"
             echo "- Verify Hostinger synchronization at https://buddhaconnect.com"
             echo "- UAT was not modified."
           } >> "$GITHUB_STEP_SUMMARY"
