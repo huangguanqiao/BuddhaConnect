@@ -1,0 +1,106 @@
+name: Record verified Production release in Jira
+
+on:
+  workflow_run:
+    workflows: ["Publish current UAT build to Production"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  jira-production-evidence:
+    name: Append verified release activity to Jira
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Find actual verified release and append Jira comments
+        uses: actions/github-script@v7
+        env:
+          JIRA_EMAIL: ${{ vars.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        with:
+          script: |
+            // workflow_run uses trusted default-branch workflow. Never fetch/execute untrusted source.
+            const email = process.env.JIRA_EMAIL;
+            const token = process.env.JIRA_API_TOKEN;
+            if (!email || !token) {
+              core.warning('Missing Jira integration credentials. Verified release was not written back to Jira.');
+              return;
+            }
+            const { owner, repo } = context.repo;
+            const run = context.payload.workflow_run;
+            const releases = await github.paginate(github.rest.repos.listReleases, { owner, repo, per_page: 100 });
+            const suffix = '-run-' + run.run_number;
+            const release = releases.find(r => r.tag_name.startsWith('prd-') && r.tag_name.endsWith(suffix));
+            if (!release) {
+              core.setFailed('Cannot find Promotion Release for Publish run ' + run.run_number);
+              return;
+            }
+            if (!release.body?.includes('- **Status:** Verified live on Hostinger')) {
+              core.setFailed('Matching Release exists but is not verified live. Refusing to write Production success to Jira.');
+              return;
+            }
+            const lines = release.body.split('\n');
+            const keys = new Set();
+            for (const line of lines) {
+              if (!line.includes('github.com/' + owner + '/' + repo + '/pull/')) continue;
+              for (const match of line.matchAll(/\bBUD-\d+\b/g)) keys.add(match[0]);
+            }
+            if (!keys.size) {
+              core.warning('No BUD keys found in GitHub Release PR summaries; no issue association invented.');
+              return;
+            }
+            const headers = {
+              Authorization: 'Basic ' + Buffer.from(email + ':' + token).toString('base64'),
+              Accept: 'application/json',
+              'Content-Type': 'application/json'
+            };
+            const marker = '[github-production-release:' + owner + '/' + repo + ':' + release.tag_name + ']';
+            for (const key of keys) {
+              const base = 'https://huangguanqiao.atlassian.net/rest/api/3/issue/' + key;
+              const detail = await fetch(base + '?fields=project', { headers, signal: AbortSignal.timeout(15000) });
+              if (!detail.ok) {
+                core.warning('Cannot verify Jira issue ' + key + ': HTTP ' + detail.status);
+                continue;
+              }
+              const issue = await detail.json();
+              if (issue.fields.project.key !== 'BUD') continue;
+              let startAt = 0, alreadyRecorded = false;
+              while (true) {
+                const response = await fetch(base + '/comment?maxResults=100&startAt=' + startAt, {
+                  headers, signal: AbortSignal.timeout(15000)
+                });
+                if (!response.ok) throw new Error('Cannot inspect Comments on ' + key + ': HTTP ' + response.status);
+                const page = await response.json();
+                if ((page.comments || []).some(x => JSON.stringify(x.body || {}).includes(marker))) {
+                  alreadyRecorded = true; break;
+                }
+                startAt += page.comments.length;
+                if (!page.comments.length || startAt >= page.total) break;
+              }
+              if (alreadyRecorded) {
+                core.info('Release already recorded on ' + key);
+                continue;
+              }
+              const lines = [
+                'Activity: Production Deployment',
+                'Date: ' + new Date().toISOString() + ' UTC',
+                'Performed by: GitHub Actions (Publish run initiated by ' + (run.actor?.login || 'unknown GitHub user') + ')',
+                'Reported by: GitHub Actions',
+                'Summary: Release ' + release.tag_name + ' was verified live after Hostinger smoke checks.',
+                'Changes: Included in validated Production artifact; see actual Release PR list.',
+                'Testing: Production live HTML matched UAT artifact and linked _astro resources returned HTTP 2xx (Publish workflow success).',
+                'References: ' + release.html_url + ' ; ' + run.html_url,
+                'Next Step: Confirm ticket-specific acceptance; do not mark Done automatically.',
+                marker
+              ];
+              const body = { body: { type: 'doc', version: 1, content: [{ type: 'paragraph', content: [{ type: 'text', text: lines.join('\n') }] }] } };
+              const wrote = await fetch(base + '/comment', {
+                method: 'POST', headers, body: JSON.stringify(body), signal: AbortSignal.timeout(15000)
+              });
+              if (!wrote.ok) throw new Error('Failed to log verified Release to Jira ' + key + ': HTTP ' + wrote.status);
+              core.info('Verified release linked to ' + key);
+            }
