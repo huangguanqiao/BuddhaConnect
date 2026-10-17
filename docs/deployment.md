@@ -29,7 +29,20 @@
 
 ## Rollback
 
-The publication workflow intentionally publishes only the **current latest** UAT version; it is not a rollback selector. Before production use, set up an explicit rollback workflow or archive each approved production build as a durable GitHub Release attachment. Re-running Publish after an erroneous release does **not** automatically restore the previous version. `force_orphan: true` replaces the branch commit history, so production branch history is **not** the rollback mechanism.
+Production is now published with `force_orphan: false`, preserving the previous file snapshot as the parent commit. After a new UAT-tested build is published with this configuration, the previous Production snapshot becomes eligible for rollback.
+
+One-click rollback procedure:
+
+1. Open GitHub > Actions > **Rollback Production to previous release**.
+2. Choose `master` and click **Run workflow**. There are no SHA or version inputs.
+3. The workflow reads the previous commit on the `production` branch, creates a **new production commit** containing exactly the previous commit's files, and pushes it to `production`.
+4. Hostinger should automatically sync the updated branch. Verify `buddhaconnect.com` and its assets. UAT remains unchanged.
+
+The rollback uses the **previous production commit**, not an earlier UAT build. It refuses to run if no parent snapshot exists, or if the previous snapshot has identical file contents. Running rollback a second time can restore the version that was current immediately before the first rollback (toggle behavior).
+
+**Migration warning:** The old deployment configuration used `force_orphan: true`, which discarded production branch ancestry. The currently live production version does **not** have an available parent from earlier releases. To test rollback, first publish a *new* UAT-tested change after this PR is merged. That publish will preserve today's live version as the previous snapshot. Then run the Rollback workflow to restore it.
+
+Git history on `production` is retained going forward, but keep periodic backups or immutable tagged releases for disaster recovery. This workflow restores versioned Git files; check Hostinger synchronization and any files outside the repository separately.
 
 ## Operational considerations
 
