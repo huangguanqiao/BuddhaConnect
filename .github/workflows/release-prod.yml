@@ -63,7 +63,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: production
           publish_dir: ./release-dist
-          force_orphan: true
+          force_orphan: false
           keep_files: false
           commit_message: 'release: promote UAT ${{ steps.uat.outputs.source_sha }} (run ${{ steps.uat.outputs.run_id }})'
 
