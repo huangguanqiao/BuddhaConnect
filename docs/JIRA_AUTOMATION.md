@@ -5,7 +5,7 @@ All change governance rules remain in [AGENTS.md](../AGENTS.md) and [JIRA_WORKFL
 ## PR gate
 
 The trusted-base `.github/workflows/jira-pr-gate.yml` runs with `pull_request_target` for PR metadata only. It **does not** check out or execute PR contents. It checks that both:
-- The PR title starts with `[BUD-N]`, for example `[BUD-10] ci: Add Jira gate`.
+- The PR title follows `[type][BUD-N] Clear English action`, for example `[ci][BUD-10] Validate Jira PR naming`.
 - The source branch includes the same BUD key, for example `BUD-10-jira-pr-audit`.
 
 When Jira credentials are present, it additionally verifies the actual Jira issue exists, belongs to BUD and has not reached a terminal Done status. A follow-up to Done must use a new linked Jira ticket.
@@ -74,3 +74,8 @@ For each matching ticket, it writes a single English Production Deployment Comme
 **This does not mark Jira Done**, update the ticket's `Pull Requests` field, or infer missing PR/Jira relationships. If the GitHub Release contains no PRs with recognizable BUD keys, no associations are invented. Missing Jira credentials result in a warning, not a claim that records were written. A successful GitHub Release does not prove the Jira automation has run.
 
 End-to-end acceptance requires a separately approved live Production Publish with configured Jira credentials and confirmation that the appropriate Jira Comment exists. Review the GitHub Actions job logs for any failures.
+
+
+## PR and Ticket naming
+
+New PRs use `[type][BUD-N] Clear English action` rather than the older `[BUD-N] type: ...`. Supported types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `content`. The source Branch must contain the same `BUD-N`. Jira Summary uses `[Area] English action` (Jira displays the issue key separately). The trusted `jira-pr-gate.yml` enforces the PR title syntax; `jira-pr-activity.yml` reads the same key. GitHub releases use a separate Promotion naming format. See `docs/JIRA_WORKFLOW.md` for examples.
