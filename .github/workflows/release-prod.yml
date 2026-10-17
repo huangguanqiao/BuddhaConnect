@@ -128,7 +128,7 @@ jobs:
               '- **Rollback:** Actions > Rollback Production to previous release',
               '',
               'UAT_SOURCE_SHA: ' + sha
-            ].join('\\n');
+            ].join('\n');
             const { data: release } = await github.rest.repos.createRelease({
               owner, repo, tag_name: tag, target_commitish: productionSha,
               name: '[Promotion] PRD ' + date, body, draft: false, prerelease: false
