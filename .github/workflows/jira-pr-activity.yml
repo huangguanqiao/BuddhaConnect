@@ -30,9 +30,9 @@ jobs:
               return;
             }
             const pr = context.payload.pull_request;
-            const key = pr.title.match(/^\[(BUD-\d+)\]/)?.[1];
+            const key = pr.title.match(/^\[(?:feat|fix|docs|chore|refactor|test|ci|perf|content)\]\[(BUD-\d+)\] /)?.[1];
             if (!key) {
-              core.warning('PR title has no BUD key; Jira issue gate is responsible for rejecting this PR.');
+              core.warning('PR title does not match [type][BUD-N] Action; Jira issue gate is responsible for rejecting this PR.');
               return;
             }
             const action = context.payload.action;
