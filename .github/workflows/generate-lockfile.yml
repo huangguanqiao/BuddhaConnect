@@ -1,0 +1,47 @@
+name: Generate reproducible npm lockfile
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          persist-credentials: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Generate package-lock.json using npm registry
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Verify clean install from lockfile
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Push generated lockfile to dedicated review branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s package-lock.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b chore/npm-lockfile
+          git add package-lock.json
+          git commit -m "chore(deps): add reproducible npm package lockfile"
+          git push origin HEAD:refs/heads/chore/npm-lockfile
+          {
+            echo '## Lockfile ready for review'
+            echo 'Branch: chore/npm-lockfile'
+            echo 'Next: open a PR from chore/npm-lockfile into master, review and merge.'
+            echo 'After merge, switch the UAT workflow to npm ci.'
+          } >> "$GITHUB_STEP_SUMMARY"
