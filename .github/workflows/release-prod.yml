@@ -96,6 +96,7 @@ jobs:
           commit_message: 'release: promote UAT ${{ steps.uat.outputs.source_sha }} (run ${{ steps.uat.outputs.run_id }})'
 
       - name: Create dated Promotion release record
+        id: release
         uses: actions/github-script@v7
         env:
           UAT_SOURCE_SHA: ${{ steps.uat.outputs.source_sha }}
@@ -161,6 +162,7 @@ jobs:
               owner, repo, tag_name: tag, target_commitish: productionSha,
               name: '[Promotion] PRD ' + date, body, draft: false, prerelease: false
             });
+            core.setOutput('release_id', String(release.id));
             core.info('Promotion record: ' + release.html_url);
 
 
@@ -212,6 +214,32 @@ jobs:
             process.exitCode = 1;
           }
           NODE
+
+      - name: Mark GitHub Release verified live
+        uses: actions/github-script@v7
+        env:
+          RELEASE_ID: ${{ steps.release.outputs.release_id }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const releaseId = Number(process.env.RELEASE_ID);
+            if (!releaseId) {
+              core.setFailed('Missing Release ID, cannot record live verification.');
+              return;
+            }
+            const { data: published } = await github.rest.repos.getRelease({ owner, repo, release_id: releaseId });
+            const before = '- **Status:** Pushed to production branch; Hostinger verification pending';
+            if (!published.body?.includes(before)) {
+              core.setFailed('Expected pending-verification marker missing from GitHub Release.');
+              return;
+            }
+            const note = '- **Status:** Verified live on Hostinger (matching UAT HTML and static assets; GitHub Actions run ' + context.runId + ')';
+            await github.rest.repos.updateRelease({
+              owner, repo, release_id: releaseId,
+              body: published.body.replace(before, note)
+            });
+            core.info('Release record updated with actual live verification: ' + published.html_url);
 
       - name: Record live verification outcome
         if: always()
