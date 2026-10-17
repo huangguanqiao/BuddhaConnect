@@ -33,7 +33,7 @@ In each PR include purpose, changed files, checks performed, sources verified fo
 - If Jira is unavailable or a new custom field is not accessible, describe the blocker and do not replace, empty or misroute content. Only report a successful Jira update after the server confirms it.
 
 ## Git and CI/CD issue traceability
-- Use a feature branch and PR that reference the real Jira key, e.g. `BUD-20-feat-virtual-wooden-fish` and `[BUD-20] feat: Add virtual wooden fish`.
+- Use a feature branch and PR that reference the real Jira key, e.g. `BUD-20-virtual-wooden-fish` and `[feat][BUD-20] Add virtual wooden fish`.
 - A GitHub PR merging into `master` means source is eligible for GitHub Pages UAT; it **does not** mean the feature is in Production.
 - Never publish to Production or trigger a rollback without explicit owner approval. Production is published using the successful UAT build artifact to the `production` branch and Hostinger sync; respect the current workflows.
 - In the PR description, summarize changes, tests, known risks and the associated Jira issue. Once a PR is merged, link it in Jira's **Pull Requests** field when possible, and retain any prior PR/release entries.
