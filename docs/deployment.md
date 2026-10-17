@@ -1,39 +1,40 @@
-# BuddhaConnect production deployment (single repository)
+# BuddhaConnect: one-click promotion from UAT to Production
 
-## Current topology
+## Deployment topology
 
-- Source branch: `master` (Astro source, public repository).
-- UAT: GitHub Actions `.github/workflows/deploy.yml` builds `dist/` and publishes it to GitHub Pages at `code.buddhaconnect.com`.
-- Production artifact branch: `production` (generated site files only, **not** a merge target). It is created on the **first approved manual release**, not when this PR is merged.
-- Production host: Hostinger for `buddhaconnect.com`, only after its Git deployment is explicitly pointed at the `production` branch and the correct document root.
+- One public GitHub repository: `huangguanqiao/BuddhaConnect`.
+- `master`: Astro source; automatic `.github/workflows/deploy.yml` build + GitHub Pages deployment to `code.buddhaconnect.com`.
+- Each UAT workflow run archives **the same built `dist/` directory** as the deployable `uat-dist` artifact, retained for up to 90 days.
+- `production`: generated website files only; **never merge source code into this branch**.
+- Hostinger: configure Git deployment to pull `production` to `buddhaconnect.com` document root, once verified.
 
-## Set up Hostinger before your first release
+## One-click production publication
 
-1. Record the current Hostinger site contents and take a backup.
-2. Inspect the existing Git integration: repository URL, selected branch, deployment directory, and auto-deployment status.
-3. Ensure Hostinger does **not** automatically publish the source branch `master` to the live document root.
-4. Choose `production` as the selected Git branch after it exists (Hostinger may require the first build to create it).
-5. Configure the document root to contain the generated `index.html`, `_astro/` and other `dist/` files, **not** a nested `dist` folder. Verify Hostinger's deployment behavior for replacing old files.
-6. Confirm there is no conflict between a Hostinger Git sync and any manual file management. Do not upload secrets or Node source code to the public web root.
+1. Merge changes into `master`, wait for the **Build and deploy Astro to GitHub Pages** Action to finish successfully, and test the site at `code.buddhaconnect.com`.
+2. Open GitHub > Actions > **Publish current UAT build to Production** > **Run workflow**, selecting `master`. There is **no SHA to type**.
+3. The job finds the **latest UAT workflow run** on `master`. If it is still running or failed, publishing stops. The job also stops if that run's `uat-dist` artifact has expired or is missing.
+4. The Action downloads the exact static files built for that UAT run **without running another build**, verifies they contain the Astro site, and publishes them to `production`.
+5. Verify that Hostinger has actually pulled and deployed `production`, then smoke-test the live site. A green GitHub Action only confirms that the branch was updated, not that the production host deployed it.
 
-## Release procedure
+**Important**: Press Publish only after the latest successful UAT deployment is the one you actually tested. If new UAT changes arrive while you are testing, retest the latest run. This workflow has no separate automated human-test-signoff record. Do not release during an in-progress UAT deployment.
 
-1. Merge the feature PR to `master`; verify `deploy.yml` completes and inspect UAT.
-2. Record the **full 40-character commit SHA** for the version successfully tested on UAT.
-3. Open Actions > **Release approved Astro build to production branch** > Run workflow, choose branch `master` and paste the SHA.
-4. The action verifies the commit belongs to `master`, checks it out, builds Astro, and commits **only** the contents of `dist/` to `production`.
-5. On the first run, the action creates `production`. Connect Hostinger to that branch and test its behavior. On subsequent runs, confirm Hostinger Git auto-deploy is working; otherwise initiate the host's own deployment.
-6. Verify production web pages and assets after the host has deployed. The GitHub action succeeding only proves that the output branch was updated; it does **not** prove Hostinger is live.
+## Safe Hostinger cutover
 
-Important: the source repository currently has no `package-lock.json`. Until a lockfile is committed and `npm ci` is used consistently in **both** UAT and production, the production build can resolve different dependency versions from an earlier UAT build. Add a lockfile and switch UAT to `npm ci` before relying on byte-for-byte parity. Prefer promoting a verified immutable build artifact for stronger guarantees.
+1. Inspect existing Hostinger Git integration: branch, directory, auto-deploy, and site type. Back up current web root.
+2. Stop any automatic syncing of `master` into the public Hostinger document root; it contains unbuilt Astro source.
+3. The `production` branch is created only when the first manual Publish Action runs. Hostinger branch switching may need to happen after that first run.
+4. Point Hostinger Git deployment to `production`. The public document root should directly contain `index.html`, `_astro/`, and site files, **not** a nested `dist/` folder.
+5. Verify how Hostinger handles overwritten and deleted files, whether auto-deploy truly triggers on `production` updates, and whether any webhook requires configuration. If needed, perform a Hostinger Git pull/deploy manually until auto-deploy is verified.
+6. Keep UAT on GitHub Pages throughout. Avoid serving production from a directory also managed by another Git integration.
 
 ## Rollback
 
-Use the same manually triggered workflow with the 40-character SHA of a previously validated `master` release, then confirm Hostinger has deployed it. Do not merge `master` into `production`, and do not manually edit generated files. The publish action uses an orphaned production commit each run; retain release SHAs/tags or GitHub Releases separately, rather than relying on the production branch history for rollback.
+The publication workflow intentionally publishes only the **current latest** UAT version; it is not a rollback selector. Before production use, set up an explicit rollback workflow or archive each approved production build as a durable GitHub Release attachment. Re-running Publish after an erroneous release does **not** automatically restore the previous version. `force_orphan: true` replaces the branch commit history, so production branch history is **not** the rollback mechanism.
 
-## Security
+## Operational considerations
 
-- Keep production publishing manual, with repository workflow access restricted to trusted maintainers.
-- Public GitHub Actions logs and the `production` branch contain no deployment secrets.
-- A repository Environment named `production` can be configured with reviewers if supported for the repository visibility and account plan.
-- Before changing the repository to private, verify GitHub Pages and deployment approval eligibility on the new plan.
+- GitHub Actions build-artifact retention is limited. A recent UAT build must still be available for one-click publication.
+- A `package-lock.json` is currently absent. Add it and use `npm ci` to stabilize future UAT builds, although promotion of the **same UAT artifact** already avoids a second dependency resolution.
+- Only trusted maintainers should be permitted to publish. The production job uses a GitHub Environment named `production`; configure reviewers and branch restrictions according to your plan's support.
+- GitHub workflow permissions must allow Actions to write repository contents for the `production` branch. Review branch protection/rulesets and GitHub Actions workflow permissions if publication fails.
+- Check GitHub Pages and Environment features before converting the repository from Public to Private under GitHub Pro.
