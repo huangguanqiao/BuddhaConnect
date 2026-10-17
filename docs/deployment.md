@@ -18,6 +18,24 @@
 
 **Important**: Press Publish only after the latest successful UAT deployment is the one you actually tested. If new UAT changes arrive while you are testing, retest the latest run. This workflow has no separate automated human-test-signoff record. Do not release during an in-progress UAT deployment.
 
+## Automatic Promotion record
+
+After a successful manual Publish, the workflow creates a GitHub Release titled
+`[Promotion] PRD YYYY-MM-DD` (Australian local date). It uses a unique tag
+`prd-YYYY-MM-DD-run-N`, so multiple publishes on the same date are allowed.
+
+The Release Description includes merged GitHub PR titles and links where available,
+a comparison link back to the previous recorded release, the UAT workflow run,
+source SHA, production branch commit and a rollback reference. Existing release
+records are left unchanged. The first release has no previous tagged baseline,
+so its automatic PR list may be limited to PRs associated with the current source
+commit; it never fabricates Jira ticket links. Jira ticket references can be
+included in feature PR titles/descriptions, or added to the release notes manually.
+
+This records a push to the Production Git branch; it is NOT proof that Hostinger
+finished deployment. Verify the live website separately. Find records at
+GitHub > Releases. Rollback does not rewrite or delete past Release records.
+
 ## Safe Hostinger cutover
 
 1. Inspect existing Hostinger Git integration: branch, directory, auto-deploy, and site type. Back up current web root.
