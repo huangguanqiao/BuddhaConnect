@@ -16,6 +16,28 @@ The authoritative issue tracker is Jira project **BUD** at https://huangguanqiao
 
 Use the exact case-sensitive custom field names as returned by Jira metadata. Custom field IDs can vary by site and must be resolved, never guessed. Never erase existing content just to satisfy this structure.
 
+## No ticket, no change — intake and grouping
+
+**Mandatory:** Every change to website copy, code, content, documentation, metadata, configuration or assets must have a real BUD-XX issue **before the first file edit**, even a one-word change. Pure discussion, inspection and research without modifying anything need no ticket.
+
+1. Search for an existing issue covering the exact scope. If found, keep using it. Do not create duplicate issues for every AI handoff or tiny commit.
+2. Otherwise create a Bug for defects, Story for user-facing functionality, or Task for maintenance, content edits and documentation. Write Chinese Description and a full English Description, with appropriately small acceptance criteria for tiny edits.
+3. Create a Jira-keyed branch and PR **after** the issue exists.
+4. For a coherent batch of tiny edits, list all affected files/pages and expected changes in **one** issue and PR, retaining one clear review/acceptance boundary.
+5. Split work when objective, module, risk, reviewer, release or independently testable behavior differs. **Same calendar day is a convenience, not permission to bundle unrelated work.** Continuing an unfinished task on the next day does not require a new ticket.
+6. If Jira is inaccessible, stop before modifying and report the blocker. An incident exception requires explicit owner approval, transparent logging and backfilled Jira evidence once access returns.
+
+### Small-change examples
+
+| Scenario | Jira approach |
+| --- | --- |
+| Fix a single word on the homepage | One lightweight Task, branch and PR |
+| Correct six typos on homepage/navigation in one review batch | One copy-edit Task listing all corrections; one PR |
+| Fix Buddhist terminology in a coherent editorial review batch | One content Task if review/acceptance scope is shared |
+| Change homepage copy and fix login security on the same day | Two issues and separate PRs |
+| Continue yesterday's unfinished wooden-fish feature | Reuse its existing Story |
+| Discover a separate feature while fixing a bug | New ticket, link related issues |
+
 ## AI workflow
 
 1. Read `AGENTS.md` and relevant project docs, then open the actual Jira issue and inspect the code.
@@ -87,3 +109,69 @@ The URLs and release values in this example are **illustrative, not actual deplo
 - `On Hold` / `Won't Do`: blocked or declined; document why.
 
 AI agents can recommend status changes but should only apply changes matching observed evidence and the project's available transitions.
+
+
+## Jira Comment activity log — mandatory milestone template
+
+All Jira Comments are in English. Comments provide a chronological, human-readable work log: write a new entry for a new event instead of rewriting previous history. They complement the two Descriptions, AI Prompt and Pull Requests field.
+
+### Required template
+
+~~~text
+Activity: Development Update
+Date: 2026-10-17 21:45 Australia/Sydney (AEDT)
+Performed by: Claude Code
+Reported by: ChatGPT (only when reporting someone else's work)
+Summary: Updated the virtual wooden fish tap counter and mobile layout.
+Changes: src/components/WoodenFish.astro; src/pages/index.astro
+Testing: npm run build — Passed; manual UAT — Not run.
+References: https://github.com/huangguanqiao/BuddhaConnect/pull/25
+Next Step: Review PR and validate on Preview before requesting release.
+~~~
+
+**Illustrative only**: Never reuse the date, performer, files, result or PR number as real evidence.
+
+### Events worth logging
+
+| Activity | When to log |
+| --- | --- |
+| Development Started | Work started or material scope/context changes |
+| Development Update | Significant implementation increment is completed |
+| Pull Request Created | A reviewable PR actually exists |
+| Code Merged | Merge into master is confirmed |
+| Testing Result | CI, build, manual test or UAT result is known |
+| Blocker / Decision | A meaningful blocker or decision changes the plan |
+| Handover | Another AI/human needs the current status and next steps |
+| Production Deployment | Publish initiated and the result observed |
+| Production Rollback | Rollback executed, target and verification recorded |
+| Completion | Applicable acceptance/Done criteria have been met |
+
+### Identity, date and quality requirements
+
+- **Performed by** is the verified actor: ChatGPT, Claude Code, Codex, Gemini, Human / Project Owner, or GitHub Actions. For joint work, attribute each contributor accurately; if unverified, say Unknown / not independently verified.
+- **Reported by** is required if the commenting AI merely reports another person's/agent's work. The Jira native comment author is the Atlassian account that posts it, **not automatically the work performer**.
+- Use the real YYYY-MM-DD HH:mm with an accurate timezone (e.g. Australia/Sydney, Australia/Canberra, or UTC offset). Never infer an execution or deployment timestamp from PR creation time.
+- **Testing** names real commands/tests and outcomes; use Not run (reason) or Not applicable rather than inventing success. Separate Build passed, UAT pending and verified Production.
+- Keep updates brief, professional and useful: real changes, references, risks and next steps. Never paste large diffs, credentials or the whole Description.
+- Write one meaningful milestone comment for a coherent batch, **not one comment per keystroke, file save or trivial edit**.
+- Distinguish "Published to production branch; Hostinger/live verification pending" from "Verified live on Production." Add a follow-up comment after live verification.
+- Record failures/blockers and rollback results as well as successes. Preserve earlier comment history; do not rewrite old entries as routine practice.
+- Confirm Jira writes actually succeeded before claiming a comment exists. Only mark Done based on applicable acceptance evidence.
+
+### Example: one batch of small wording changes
+
+~~~text
+Activity: Development Update
+Date: <actual date/time and timezone>
+Performed by: <actual actor>
+Summary: Corrected copy in the agreed editorial review batch.
+Changes:
+- src/pages/index.astro — corrected heading punctuation.
+- src/components/Header.astro — updated navigation label.
+- src/content/articles/example.md — corrected terminology.
+Testing: npm run build — <actual result>; editorial review — <actual result>.
+References: <real BUD ticket and PR URL>
+Next Step: <actual next action>
+~~~
+
+These edits can share one ticket **only when they are genuinely one review scope**. Merely listing several files does not justify combining unrelated tasks.
