@@ -33,7 +33,7 @@ In each PR include purpose, changed files, checks performed, sources verified fo
 - If Jira is unavailable or a new custom field is not accessible, describe the blocker and do not replace, empty or misroute content. Only report a successful Jira update after the server confirms it.
 
 ## Git and CI/CD issue traceability
-- Use a feature branch and PR that reference the real Jira key, e.g. `BUD-20-feat-virtual-wooden-fish` and `[BUD-20] feat: Add virtual wooden fish`.
+- Use a feature branch and PR that reference the real Jira key, e.g. `BUD-20-virtual-wooden-fish` and `[feat][BUD-20] Add virtual wooden fish`.
 - A GitHub PR merging into `master` means source is eligible for GitHub Pages UAT; it **does not** mean the feature is in Production.
 - Never publish to Production or trigger a rollback without explicit owner approval. Production is published using the successful UAT build artifact to the `production` branch and Hostinger sync; respect the current workflows.
 - In the PR description, summarize changes, tests, known risks and the associated Jira issue. Once a PR is merged, link it in Jira's **Pull Requests** field when possible, and retain any prior PR/release entries.
@@ -92,3 +92,10 @@ In each PR include purpose, changed files, checks performed, sources verified fo
 - When relevant blockers remain unresolved, clearly show **Blocked** in the working notes/Comments and avoid advancing to Ready for Release or Done contrary to acceptance; if the actual workflow lacks a Blocked state, retain the valid status and document the blocking issue key.
 - For multi-ticket work, use an **Epic/parent** for a real shared deliverable, direct Blocks links for prerequisites, and Relates links for related but independent work. Be selective: don't indiscriminately link every issue in the same project.
 - Add links **when creating the new related issue or when discovering the relationship**, verify both issue keys and link direction, and mention the linkage in an English activity Comment. Confirm server success. If native links cannot be created, report the limitation rather than claiming they exist.
+
+
+## Naming conventions — Jira, PR, branch, commit
+- Jira Summary: `[Area] Verb + clear English objective` (e.g. `[UI] Add virtual wooden fish`, `[Content] Correct homepage terminology`, `[CI/CD] Validate Jira PR naming`). Do NOT put the Jira Key in Summary; Jira already shows it separately. Issue Type (Story/Bug/Task) is distinct from the Area tag.
+- New feature PR title: `[type][BUD-XX] Clear English action`, e.g. `[feat][BUD-20] Add virtual wooden fish`, `[fix][BUD-21] Correct mobile tap counter`. Allowed lower-case types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `content`. The action begins with an uppercase letter. Branch and PR must refer to the same existing, applicable BUD ticket.
+- Branch: `BUD-XX-short-kebab-description`. Commit: Conventional Commit style `type(scope): short English summary` where practical. Do not use `BUD~20`, which is not a Jira issue key.
+- Production GitHub Releases retain `[Promotion] PRD YYYY-MM-DD`: they are not feature PR titles. Do not retroactively rename historical PRs or completed Jira summaries. Full examples in `docs/JIRA_WORKFLOW.md`.

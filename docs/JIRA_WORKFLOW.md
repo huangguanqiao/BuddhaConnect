@@ -43,7 +43,7 @@ Use the exact case-sensitive custom field names as returned by Jira metadata. Cu
 1. Read `AGENTS.md` and relevant project docs, then open the actual Jira issue and inspect the code.
 2. Understand requirements from both descriptions. If one is missing, draft a translation of the other; preserve important qualifications and URLs.
 3. Draft `AI Prompt` in English: goal, scope, technical approach, constraints, acceptance checks, test commands, branch and PR naming, handoff. Do not claim a generated prompt was executed.
-4. Implement in a dedicated feature branch with an actual `BUD-XX` key and create a PR: `[BUD-XX] feat: Clear English title`.
+4. Implement in a dedicated feature branch with an actual `BUD-XX` key and create a PR: `[feat][BUD-XX] Clear English action`.
 5. Run checks and build; log real test results rather than unverified claims. Merge into `master` only after review; GitHub Pages UAT is deployed automatically.
 6. Link merged PR(s) in the ticket's `Pull Requests` field. UAT acceptance is separate from code merge.
 7. Only with explicit approval, trigger the existing Production Publish workflow. Verify the Hostinger-served website before declaring the feature live, and record the true GitHub Release URL and tag.
@@ -79,7 +79,7 @@ Read AGENTS.md, relevant project documentation and the current Astro codebase.
 Build a responsive interactive wooden fish with a tap counter, sound and mute control.
 Reuse current UI patterns and avoid unnecessary dependencies.
 Validate every acceptance criterion and run the available project checks.
-Create a feature PR titled "[BUD-20] feat: Add virtual wooden fish".
+Create a feature PR titled "[feat][BUD-20] Add virtual wooden fish".
 Update the Jira ticket with factual test evidence and the Feature PR URL.
 Do not initiate a Production deployment.
 ```
@@ -230,3 +230,21 @@ BUD-32 (Medium Priority) — Add search filters
 If filters require the improved search API: BUD-31 blocks BUD-32.
 If filters work independently: no Blocks link; use Relates only if helpful.
 ~~~
+
+
+## Jira, PR and Git naming standards
+
+| Object | Format | Example |
+| --- | --- | --- |
+| Jira Summary | `[Area] Verb + English outcome` | `[UI] Add virtual wooden fish` |
+| Feature PR Title | `[type][BUD-N] Clear English action` | `[feat][BUD-20] Add virtual wooden fish` |
+| Branch | `BUD-N-short-kebab-description` | `BUD-20-virtual-wooden-fish` |
+| Commit | `type(scope): English action` | `feat(wooden-fish): add tap counter` |
+| GitHub Production Release | `[Promotion] PRD YYYY-MM-DD` | Separate from the PR naming standard |
+
+**Jira Summary:** Use meaningful English area prefixes such as `UI`, `Content`, `CI/CD`, `Security`, `AI/Jira`; put the real Jira key in references and Branch/PR, not the Summary. Preserve completed Ticket titles as history.
+
+**PR types:** `feat` (feature), `fix` (bug), `docs` (docs only), `chore` (maintenance/copy), `refactor` (internal rewrite), `test` (tests), `ci` (automation), `perf` (performance), `content` (articles/editorial). Type lowercase, action in English starting with a capital letter. Examples: `[content][BUD-31] Add beginner Buddhism guide`; `[fix][BUD-32] Fix missing audio on iOS`; `[chore][BUD-33] Correct homepage wording`.
+
+The key syntax uses a hyphen (`BUD-20`), **not** a tilde (`BUD~20`). Existing historical PRs do not need renaming. Done tickets must not be reused for new work.
+

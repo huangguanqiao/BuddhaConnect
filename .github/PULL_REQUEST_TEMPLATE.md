@@ -29,3 +29,6 @@
 
 > PR title and feature branch must share the same **active** `BUD-XX` key.
 > The PR is for source review and GitHub Pages UAT. A merge does **not** prove UAT or Production acceptance.
+
+
+> **Required naming:** PR title `[type][BUD-XX] Clear English action` (e.g. `[feat][BUD-20] Add virtual wooden fish`); types `feat/fix/docs/chore/refactor/test/ci/perf/content`. Branch `BUD-XX-short-kebab-description`. Jira Summary `[Area] Action`, without manually adding BUD key.
