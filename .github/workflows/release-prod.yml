@@ -1,0 +1,70 @@
+name: Release approved Astro build to production branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 'Full 40-character commit SHA already tested at code.buddhaconnect.com'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: buddhaconnect-production-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout source and history
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Validate selected commit belongs to master
+        env:
+          RELEASE_SHA: ${{ inputs.commit_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_SHA" =~ ^[0-9a-fA-F]{40}$ ]] || { echo "Provide a full 40-character commit SHA"; exit 1; }
+          git cat-file -e "${RELEASE_SHA}^{commit}"
+          git merge-base --is-ancestor "$RELEASE_SHA" origin/master || { echo "Commit must be part of master history"; exit 1; }
+          echo "Selected release: $RELEASE_SHA"
+
+      - name: Checkout approved commit
+        env:
+          RELEASE_SHA: ${{ inputs.commit_sha }}
+        run: git checkout --detach "$RELEASE_SHA"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Build production site
+        run: npm run build
+
+      - name: Publish only dist contents to production branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: production
+          publish_dir: ./dist
+          force_orphan: true
+          keep_files: false
+          commit_message: 'release: publish approved build ${{ inputs.commit_sha }}'
