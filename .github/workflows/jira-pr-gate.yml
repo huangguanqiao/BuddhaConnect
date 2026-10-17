@@ -25,13 +25,15 @@ jobs:
           script: |
             // pull_request_target runs the trusted BASE workflow. Never checkout or execute PR code here.
             const pr = context.payload.pull_request;
-            const titleKey = pr.title.match(/^\[(BUD-\d+)\]/)?.[1];
+            // Standard naming: [type][BUD-123] Clear English action.
+            const titleMatch = pr.title.match(/^\[(feat|fix|docs|chore|refactor|test|ci|perf|content)\]\[(BUD-\d+)\] ([A-Z][^\r\n]{4,99})$/);
+            const titleKey = titleMatch?.[2];
             const branchKey = pr.head.ref.match(/(?:^|[\/_-])(BUD-\d+)(?=$|[\/_-])/i)?.[1]?.toUpperCase();
             if (!titleKey || !branchKey || titleKey !== branchKey) {
-              core.setFailed('PR title and branch must reference the same real Jira key: [BUD-123] feat: ... and BUD-123-feature-name.');
+              core.setFailed('Required PR title: [type][BUD-123] Clear English action (allowed types: feat/fix/docs/chore/refactor/test/ci/perf/content); branch must contain the same BUD-123 key. Example: [feat][BUD-123] Add virtual wooden fish.');
               return;
             }
-            core.info('PR title and branch reference ' + titleKey);
+            core.info('PR naming verified: ' + titleMatch[1] + ' / ' + titleKey + ' / ' + titleMatch[3]);
             const email = process.env.JIRA_EMAIL;
             const token = process.env.JIRA_API_TOKEN;
             if (!email || !token) {
