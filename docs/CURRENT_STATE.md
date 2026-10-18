@@ -11,11 +11,13 @@ Last documentation review: 2026-10-18.
 - GitHub Pages UAT on `master` and the independent `production` branch / Hostinger Git workflow have been manually confirmed in the earlier release setup.
 - Jira `BUD` project and bilingual issue conventions are in use; repo policy is in `AGENTS.md` and `docs/JIRA_WORKFLOW.md`.
 - BUD-6 introduces PR quality checks and post-Publish live-site checks; runtime success still needs confirmation after merge.
+- BUD-25/BUD-26 provide fail-closed Jira intake and dry-run tests. BUD-27 adds a default-off, credential-gated AI branch/PR pipeline with bounded retries, protected-path checks, low-risk merge gates and GitHub Pages UAT/Jira reconciliation; live execution still requires repository configuration and an end-to-end test ticket.
 
 ## Not yet verified
 - Editorial verification of sample articles.
 - GitHub PR merge enforcement (branch/ruleset settings), Jira API credential configuration and automated Jira status updates.
 - New PR checks and Hostinger smoke test passing on real GitHub Actions executions.
+- BUD-27 live-mode credentials, non-admin automation identity, exact required-check names, Gemini quota and end-to-end Jira-to-UAT execution.
 - Automated editorial validation or content approval process.
 
 ## Next steps

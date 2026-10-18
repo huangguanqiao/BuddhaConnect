@@ -1,0 +1,36 @@
+name: AI development CI reconciliation
+
+on:
+  workflow_run:
+    workflows: [PR quality checks]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-reconcile-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    if: vars.AI_DEV_LIVE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Retry transient CI once or merge fully green low-risk PR
+        env:
+          AI_GITHUB_TOKEN: ${{ secrets.AI_GITHUB_TOKEN }}
+          AI_AUTO_MERGE: ${{ vars.AI_DEV_AUTO_MERGE_ENABLED }}
+          AI_REQUIRED_CHECKS: ${{ vars.AI_REQUIRED_CHECKS }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        run: node scripts/ai-dev/reconcile.mjs
