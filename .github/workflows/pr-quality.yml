@@ -31,6 +31,8 @@ jobs:
         run: node --test tests/repository-quality.test.mjs
       - name: Check Markdown and article structure
         run: node scripts/check-repository.mjs
+      - name: Test Confluence sync safeguards
+        run: node --test tests/confluence-sync.test.mjs
       - name: Validate Astro and TypeScript
         run: npm run check
       - name: Build static site
