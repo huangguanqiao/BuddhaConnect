@@ -1,5 +1,4 @@
 ---
-import Base from '../layouts/Base.astro';import PageHeading from '../components/PageHeading.astro';
+import Redirect from '../components/Redirect.astro';
 ---
-<Base title="关于 · BuddhaConnect"><PageHeading eyebrow="ABOUT US" title="关于 BuddhaConnect" description="一个以阅读、理解和日常实践为中心的佛教文化内容网站。"/><section class="section"><div class="wrap about"><p class="eyebrow">OUR PURPOSE</p><h2 class="serif">让智慧更容易被理解，<br/>也更容易走进生活。</h2><div class="prose"><p>BuddhaConnect 希望以平实、开放的方式介绍佛教文化、思想与经典。我们重视清楚的表达，也尊重不同传统之间的差异。</p><p>网站目前处于重新建设阶段。现有文章为初始示例内容，后续会逐步补充经文来源、参考资料与编辑说明。</p><p>这里的内容旨在文化与教育交流，不替代专业医疗、心理或其他建议。</p></div><a class="button" href="/articles/">浏览文章 ↗</a></div></section></Base>
-<style>.about{max-width:790px}.about h2{font-size:clamp(2rem,4vw,3rem);font-weight:500;line-height:1.6;margin:20px 0 35px}.about .button{margin-top:25px}</style>
+<Redirect to="/zh/about/" title="关于 BuddhaConnect" />

@@ -1,0 +1,11 @@
+---
+import { UI } from '../lib/site-i18n.mjs';
+type Locale = keyof typeof UI;
+interface BreadcrumbItem { label:string; href?:string }
+interface Props { locale:Locale; items:BreadcrumbItem[] }
+const { locale, items } = Astro.props;
+---
+<nav class="breadcrumbs wrap" aria-label={UI[locale].breadcrumb}>
+  <ol>{items.map((item:BreadcrumbItem, index:number) => <li>{item.href && index < items.length - 1 ? <a href={item.href}>{item.label}</a> : <span aria-current="page">{item.label}</span>}{index < items.length - 1 && <i aria-hidden="true">/</i>}</li>)}</ol>
+</nav>
+<style>.breadcrumbs{padding-top:1.25rem}.breadcrumbs ol{display:flex;align-items:center;gap:.55rem;margin:0;padding:0;list-style:none;color:var(--muted);font-size:.75rem}.breadcrumbs li{display:flex;align-items:center;gap:.55rem}.breadcrumbs a:hover{text-decoration:underline;text-underline-offset:.25rem}.breadcrumbs i{color:var(--gold);font-style:normal}</style>

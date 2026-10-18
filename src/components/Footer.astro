@@ -1,0 +1,19 @@
+---
+import { UI, localizedPath } from '../lib/site-i18n.mjs';
+type Locale = keyof typeof UI;
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const ui = UI[locale];
+---
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-brand"><a class="brand" href={localizedPath(locale)}><img src="/images/lotus-mark.svg" width="44" height="44" alt=""/><span>BuddhaConnect</span></a><p>{ui.footerPurpose}</p></div>
+    <div><h2>{ui.menu}</h2><nav><a href={localizedPath(locale,'start')}>{ui.start}</a><a href={localizedPath(locale,'teachings')}>{ui.teachings}</a><a href={localizedPath(locale,'practice')}>{ui.practice}</a><a href={localizedPath(locale,'articles')}>{ui.articles}</a></nav></div>
+    <div><h2>{ui.editorial}</h2><p>{ui.editorialText}</p><p class="pending">{ui.footerNote}</p></div>
+  </div>
+  <div class="wrap footer-bottom"><span>© {new Date().getFullYear()} BuddhaConnect</span><span>{ui.copyright}</span></div>
+</footer>
+<style>
+  .site-footer{padding:4.5rem 0 1.5rem;background:var(--pine-900);color:#f5f3eb}.footer-grid{display:grid;grid-template-columns:1.2fr .7fr 1fr;gap:clamp(2rem,6vw,6rem)}.brand{display:inline-flex;align-items:center;gap:.7rem;font-family:var(--font-serif);font-size:1.3rem}.brand img{filter:saturate(.8) brightness(1.25)}.footer-brand p,.footer-grid>div:last-child p{max-width:27rem;color:#bcc8c0;line-height:1.8;font-size:.88rem}.footer-grid h2{margin:.45rem 0 1rem;color:#d9c99f;font:700 .7rem/1 var(--font-sans);letter-spacing:.14em;text-transform:uppercase}.footer-grid nav{display:grid;gap:.75rem;color:#d9e0da;font-size:.88rem}.footer-grid a:hover{text-decoration:underline;text-underline-offset:.3rem}.pending{padding-top:.75rem;border-top:1px solid #ffffff1f}.footer-bottom{display:flex;justify-content:space-between;gap:1rem;margin-top:3.5rem;padding-top:1.25rem;border-top:1px solid #ffffff1f;color:#91a39a;font-size:.72rem}
+  @media(max-width:760px){.footer-grid{grid-template-columns:1fr}.footer-bottom{flex-direction:column}.site-footer{padding-top:3rem}}
+</style>

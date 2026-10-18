@@ -1,0 +1,4 @@
+---
+const { to, title = 'BuddhaConnect' } = Astro.props;
+---
+<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><meta http-equiv="refresh" content={`0; url=${to}`}/><link rel="canonical" href={new URL(to, Astro.site).href}/><title>{title}</title></head><body><p><a href={to}>Continue to BuddhaConnect</a></p><script is:inline define:vars={{to}}>location.replace(to)</script></body></html>

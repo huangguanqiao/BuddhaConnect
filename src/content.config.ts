@@ -12,6 +12,7 @@ const articles = defineCollection({
     slug: z.string().optional(),
     published: z.boolean().default(true),
     qaStatus: z.enum(['Pending','Passed','Failed','Needs Human Review']).optional(),
+    section: z.enum(['start','teachings','practice']).default('teachings'),
   }),
 });
 export const collections = { articles };

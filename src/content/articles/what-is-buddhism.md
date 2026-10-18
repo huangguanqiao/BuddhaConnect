@@ -3,6 +3,10 @@ title: 佛教是什么？从理解与实践开始
 description: 佛教不只是遥远的宗教知识，也是一种观察痛苦、理解变化和培养慈悲的实践路径。
 date: 2026-10-14
 category: 佛学入门
+articleId: what-is-buddhism
+language: zh-CN
+slug: what-is-buddhism
+section: start
 ---
 佛教起源于古代印度，围绕一个朴素而深刻的问题展开：**人为什么会感到不满足，又能如何减少痛苦？**
 
