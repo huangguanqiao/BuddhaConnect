@@ -1,16 +1,9 @@
 name: AI development pipeline
 
+# Dormant by owner request: manual read-only inspection only.
+# Restore schedule/live dispatch through a separately reviewed PR when ready.
 on:
-  schedule:
-    - cron: '17 * * * *'
   workflow_dispatch:
-    inputs:
-      mode:
-        description: Dry run only, or execute one eligible ticket
-        required: true
-        type: choice
-        options: [dry-run, live]
-        default: dry-run
 
 permissions:
   contents: read
@@ -24,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      AI_DEV_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'live' && 'live' || (github.event_name == 'schedule' && vars.AI_DEV_LIVE_ENABLED == 'true' && 'live' || 'dry_run') }}
+      AI_DEV_MODE: dry_run
     steps:
       - name: Checkout trusted master without persisted credentials
         uses: actions/checkout@v4
