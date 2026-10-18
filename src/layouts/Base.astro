@@ -5,15 +5,15 @@ const { title = 'BuddhaConnect · 在日常中遇见智慧', description = '以�
 const links = [{name:'首页',href:'/'},{name:'佛学入门',href:'/start/'},{name:'佛教经典',href:'/classics/'},{name:'文章',href:'/articles/'},{name:'佛教词典',href:'/glossary/'},{name:'关于',href:'/about/'}];
 const current = Astro.url.pathname;
 const locale = Astro.props.locale ?? localeFromPath(current);
-const ui=UI[locale];
+const ui=UI[locale as keyof typeof UI];
 const localized=Boolean(Astro.props.locale);
 const navLinks=localized?[{name:ui.home,href:localePrefix(locale)+'/'},{name:ui.articles,href:localePrefix(locale)+'/articles/'}]:links;
 const translationLinks=Astro.props.translationLinks ?? [];
 const pagePath = current.replace(/^\/(zh|zh-tw|en)(?=\/|$)/,'');
-const switchHref=(lang)=>translationLinks.length ? (translationLinks.find(x=>x.locale===lang)?.url ?? null) : localePrefix(lang)+(pagePath==='/'?'/' : pagePath);
+const switchHref=(lang: string)=>translationLinks.length ? (translationLinks.find((x: {locale:string,url:string})=>x.locale===lang)?.url ?? null) : localePrefix(lang)+(pagePath==='/'?'/' : pagePath);
 
 ---
-<!doctype html><html lang={locale}><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="generator" content={Astro.generator}/><meta name="theme-color" content="#243c35"/><meta name="description" content={description}/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href}/>{translationLinks.map(t=><link rel="alternate" hreflang={t.locale} href={new URL(t.url,Astro.site).href}/>)}<title>{title}</title></head>
+<!doctype html><html lang={locale}><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="generator" content={Astro.generator}/><meta name="theme-color" content="#243c35"/><meta name="description" content={description}/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href}/>{translationLinks.map((t: {locale:string,url:string})=><link rel="alternate" hreflang={t.locale} href={new URL(t.url,Astro.site).href}/>)}<title>{title}</title></head>
 <body>
 <header class="site-header"><div class="wrap nav"><a class="logo" href="/" aria-label="BuddhaConnect 首页"><span class="mark">◌</span><span>Buddha<span class="logo-light">Connect</span></span></a><nav aria-label="主导航">{navLinks.map(link=><a href={link.href} aria-current={current===link.href?'page':undefined}>{link.name}</a>)}</nav><div class="language-switch" aria-label="Language">{LOCALES.map(lang=>switchHref(lang)?<a href={switchHref(lang)} hreflang={lang} aria-current={locale===lang?'true':undefined}>{lang}</a>:<span title={ui.missing}>{lang}</span>)}</div>{!localized&&<a class="nav-cta" href="/start/">开始探索 <span aria-hidden="true">↗</span></a>}</div></header>
 <main><slot/></main>
