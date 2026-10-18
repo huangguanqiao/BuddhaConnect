@@ -1,0 +1,61 @@
+---
+import Base from '../../layouts/Base.astro';
+import {getCollection} from 'astro:content';
+import {LOCALES,LOCALE_PATHS,UI,localizedEntry} from '../../lib/site-i18n.mjs';
+import {articleUrl} from '../../lib/i18n.mjs';
+import {filterSearchEntries} from '../../lib/search-config.mjs';
+export function getStaticPaths(){return LOCALES.map(locale=>({params:{locale:LOCALE_PATHS[locale as keyof typeof LOCALE_PATHS]},props:{language:locale}}));}
+const {language}=Astro.props;const ui=UI[language as keyof typeof UI];
+const raw=(await getCollection('articles')).map(entry=>({...localizedEntry(entry),date:entry.data.date.toISOString()}));
+const entries=filterSearchEntries(raw,{language});
+const categories: string[]=[...new Set<string>(entries.map((a: any)=>String(a.category)))].sort();
+const labels=language==='en'?{category:'Category',all:'All categories',sort:'Sort by',newest:'Newest',oldest:'Oldest',title:'Title',results:'Results',clear:'Clear',type:'Content type',article:'Articles'}:language==='zh-TW'?{category:'分類',all:'所有分類',sort:'排序',newest:'最新',oldest:'最舊',title:'標題',results:'結果',clear:'清除',type:'內容類型',article:'文章'}:{category:'分类',all:'全部分类',sort:'排序',newest:'最新',oldest:'最早',title:'标题',results:'结果',clear:'清除',type:'内容类型',article:'文章'};
+---
+<Base locale={language} title={`${ui.search} · BuddhaConnect`}>
+<section class="section"><div class="wrap"><p class="eyebrow">BUDDHACONNECT · SEARCH</p><h1 class="serif">{ui.search}</h1><p>{ui.intro}</p>
+<form id="site-search" class="search-controls" role="search">
+<label>{ui.search}<input id="query" type="search" name="q" autocomplete="off" placeholder={ui.search}/></label>
+<label>{labels.type}<select disabled aria-label={labels.type}><option>{labels.article}</option></select></label>
+<label>{labels.category}<select id="category" name="category"><option value="">{labels.all}</option>{categories.map(category=><option value={category}>{category}</option>)}</select></label>
+<label>{labels.sort}<select id="sort" name="sort"><option value="newest">{labels.newest}</option><option value="oldest">{labels.oldest}</option><option value="title">{labels.title}</option></select></label>
+<button type="reset">{labels.clear}</button>
+</form>
+<p class="count" aria-live="polite"><span id="result-count">{entries.length}</span> {labels.results}</p>
+<p id="no-results" hidden>{ui.noResults}</p>
+<div id="results" class="search-results">{entries.map((a: any)=><a class="tile search-result" href={articleUrl(a)} data-title={a.title.toLocaleLowerCase()} data-description={a.description.toLocaleLowerCase()} data-category={a.category} data-date={a.date}><p class="eyebrow">{a.category}</p><h2 class="serif">{a.title}</h2><p>{a.description}</p><span>{ui.read} ↗</span></a>)}</div>
+{entries.length===0&&<p>{ui.empty}</p>}
+</div></section></Base>
+<script>
+const form=document.querySelector<HTMLFormElement>('#site-search');
+const query=document.querySelector<HTMLInputElement>('#query');
+const category=document.querySelector<HTMLSelectElement>('#category');
+const sort=document.querySelector<HTMLSelectElement>('#sort');
+const items=[...document.querySelectorAll<HTMLElement>('#results .search-result')];
+const count=document.querySelector<HTMLElement>('#result-count');
+const empty=document.querySelector<HTMLElement>('#no-results');
+function updateSearch(){
+ const q=(query?.value??'').trim().toLocaleLowerCase();
+ const c=category?.value??'';
+ const order=sort?.value??'newest';
+ const visible=items.filter(el=>{
+ const matches=(!c||el.dataset.category===c)&&(!q||[el.dataset.title,el.dataset.description,el.dataset.category?.toLocaleLowerCase()].some(v=>v?.includes(q)));
+ el.hidden=!matches;return matches;
+ });
+ visible.sort((a,b)=>order==='title'?(a.dataset.title??'').localeCompare(b.dataset.title??''):order==='oldest'?(a.dataset.date??'').localeCompare(b.dataset.date??''):(b.dataset.date??'').localeCompare(a.dataset.date??''));
+ const parent=document.querySelector('#results');visible.forEach(el=>parent?.appendChild(el));
+ if(count)count.textContent=String(visible.length);
+ if(empty)empty.hidden=visible.length!==0;
+ const url=new URL(location.href);
+ for(const [key,value] of [['q',query?.value??''],['category',c],['sort',order==='newest'?'':order]]){if(value)url.searchParams.set(key,value);else url.searchParams.delete(key);}
+ history.replaceState(null,'',url);
+}
+const initial=new URLSearchParams(location.search);
+if(query)query.value=initial.get('q')??'';
+if(category&&[...category.options].some(o=>o.value===initial.get('category')))category.value=initial.get('category')??'';
+if(sort&&['newest','oldest','title'].includes(initial.get('sort')??''))sort.value=initial.get('sort')??'newest';
+form?.addEventListener('input',updateSearch);
+form?.addEventListener('change',updateSearch);
+form?.addEventListener('reset',()=>requestAnimationFrame(updateSearch));
+updateSearch();
+</script>
+<style>.search-controls{display:flex;gap:14px;flex-wrap:wrap;align-items:end;margin-top:30px;padding:20px;background:#f0efe7;border-radius:10px}.search-controls label{display:grid;gap:8px;font-size:.85rem;flex:1;min-width:140px}.search-controls label:first-child{flex:2;min-width:240px}.search-controls input,.search-controls select{width:100%;border:1px solid #c5c9c1;border-radius:6px;padding:12px;background:#fff}.search-controls button{border:1px solid #a2aa9e;background:transparent;padding:12px;border-radius:6px;cursor:pointer}.search-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}.search-result h2{font-size:1.45rem;margin:14px 0}.search-result p{line-height:1.8}.search-result span{color:#315d4b}.search-result[hidden],#no-results[hidden]{display:none}.count{margin:28px 0;color:#657569}</style>
