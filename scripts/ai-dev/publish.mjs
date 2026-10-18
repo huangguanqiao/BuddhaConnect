@@ -20,7 +20,7 @@ async function main() {
   exec('git', ['push', '--set-upstream', 'origin', `HEAD:${task.branch}`], env);
 
   const type = task.type === 'Bug' ? 'fix' : 'feat';
-  const cleanSummary = task.summary.replace(/^[^A-Za-z0-9]+/, '').slice(0, 90);
+  const cleanSummary = task.summary.replace(/\s+/g, ' ').replace(/^[^A-Za-z0-9]+/, '').trim().slice(0, 90);
   const action = cleanSummary.charAt(0).toUpperCase() + cleanSummary.slice(1);
   const title = `[${type}][${task.key}] ${action}`;
   const tests = 'node --test tests/*.test.mjs; node scripts/check-repository.mjs; npm run check; npm run build';

@@ -21,6 +21,7 @@ export function assessChanges(entries, { maxFiles = 20, maxLines = 1200 } = {}) 
   if (files.length > maxFiles) reasons.push('too_many_files');
   if (totalLines > maxLines) reasons.push('diff_too_large');
   for (const entry of entries) {
+    if (/[\x00-\x1f\x7f\\]/.test(entry.path)) reasons.push(`unsafe_path:${JSON.stringify(entry.path)}`);
     if (entry.symlink) reasons.push(`symlink:${entry.path}`);
     if (entry.binary) reasons.push(`binary:${entry.path}`);
     if (FORBIDDEN.some(pattern => pattern.test(entry.path))) reasons.push(`protected_path:${entry.path}`);
@@ -30,14 +31,16 @@ export function assessChanges(entries, { maxFiles = 20, maxLines = 1200 } = {}) 
 }
 
 export function readGitChanges(base = 'origin/master') {
-  const names = execFileSync('git', ['diff', '--name-status', '--no-renames', base, '--'], { encoding: 'utf8' }).trim();
-  const nums = execFileSync('git', ['diff', '--numstat', '--no-renames', base, '--'], { encoding: 'utf8' }).trim();
-  const statuses = new Map(names.split('\n').filter(Boolean).map(line => {
-    const [status, ...parts] = line.split('\t');
-    return [parts.at(-1), status];
-  }));
-  const tracked = nums.split('\n').filter(Boolean).map(line => {
-    const [added, deleted, path] = line.split('\t');
+  const names = execFileSync('git', ['diff', '--name-status', '-z', '--no-renames', base, '--'], { encoding: 'utf8' }).split('\0').filter(Boolean);
+  const statuses = new Map();
+  for (let index = 0; index < names.length; index += 2) statuses.set(names[index + 1], names[index]);
+  const nums = execFileSync('git', ['diff', '--numstat', '-z', '--no-renames', base, '--'], { encoding: 'utf8' }).split('\0').filter(Boolean);
+  const tracked = nums.map(line => {
+    const firstTab = line.indexOf('\t');
+    const secondTab = line.indexOf('\t', firstTab + 1);
+    const added = line.slice(0, firstTab);
+    const deleted = line.slice(firstTab + 1, secondTab);
+    const path = line.slice(secondTab + 1);
     return {
       path,
       status: statuses.get(path) ?? 'M',

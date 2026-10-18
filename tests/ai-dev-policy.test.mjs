@@ -23,4 +23,5 @@ test('content, docs and oversized diffs require manual merge or are rejected', (
   assert.equal(assessChanges([entry('docs/PROJECT.md')]).lowRisk, false);
   assert.equal(assessChanges([entry('src/pages/a.astro', { added: 1201 })]).allowed, false);
   assert.equal(assessChanges([entry('src/pages/a.astro', { symlink: true })]).allowed, false);
+  assert.equal(assessChanges([entry('src/pages/bad\nname.astro')]).allowed, false);
 });
