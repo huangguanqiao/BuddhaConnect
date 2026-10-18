@@ -1,0 +1,24 @@
+name: Validate multilingual site
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund
+          else npm install --no-audit --no-fund
+          fi
+      - name: Locale unit tests
+        run: node --test tests/*.test.mjs
+      - name: Build Astro
+        run: npm run build
