@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {evaluateIssue,planIssues,fetchJiraIssues} from '../scripts/ai-dev/intake.mjs';
+import {evaluateIssue,planIssues,fetchJiraIssues,jiraText} from '../scripts/ai-dev/intake.mjs';
 const issue=(key='BUD-99',extra={})=>({key,fields:{summary:'Add accessible FAQ page',description:'Add page and unit tests, acceptance criteria are specified.',labels:['ai-ready'],issuetype:{name:'Task'},status:{name:'To Do'},...extra}});
 test('only explicitly opted-in BUD tasks accepted',()=>{
  assert.equal(evaluateIssue(issue()).eligible,true);
@@ -9,6 +9,7 @@ test('only explicitly opted-in BUD tasks accepted',()=>{
 test('high-risk work is held for manual review',()=>{
  assert.equal(evaluateIssue(issue('BUD-10',{summary:'Rotate production secret'})).eligible,false);
  assert.equal(evaluateIssue(issue('BUD-10',{summary:'删除数据'})).eligible,false);
+ assert.equal(evaluateIssue(issue('BUD-10',{summary:'Change GitHub Actions workflow'})).eligible,false);
 });
 test('one task per run and duplicate active tasks excluded',()=>{
  const plan=planIssues([issue('BUD-12'),issue('BUD-11'),issue('BUD-13')],{limit:50,activeKeys:['BUD-11']});
@@ -23,4 +24,9 @@ test('fetch reads only Jira search API',async()=>{
  let method='';
  const data=await fetchJiraIssues({baseUrl:'https://example.atlassian.net',email:'a@example.com',apiToken:'test',fetchImpl:async(url,opts)=>{assert.match(String(url),/\/rest\/api\/3\/search\/jql/);method=opts.method??'GET';return {ok:true,json:async()=>({issues:[issue()]})}}});
  assert.equal(method,'GET');assert.equal(data.length,1);
+});
+test('Atlassian document descriptions are normalized to text',()=>{
+ const adf={type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'Acceptance criteria are explicit.'}]}]};
+ assert.equal(jiraText(adf),'Acceptance criteria are explicit.');
+ assert.equal(evaluateIssue(issue('BUD-42',{description:adf})).eligible,true);
 });

@@ -1,27 +1,89 @@
-name: AI development intake (read only)
+name: AI development pipeline
+
 on:
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Dry run only, or execute one eligible ticket
+        required: true
+        type: choice
+        options: [dry-run, live]
+        default: dry-run
+
 permissions:
   contents: read
+
 concurrency:
-  group: buddha-ai-intake
+  group: buddha-ai-development
   cancel-in-progress: false
+
 jobs:
   intake:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 45
+    env:
+      AI_DEV_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'live' && 'live' || (github.event_name == 'schedule' && vars.AI_DEV_LIVE_ENABLED == 'true' && 'live' || 'dry_run') }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout trusted master without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify intake rules
-        run: node --test tests/ai-dev-intake.test.mjs
-      - name: Inspect opted-in Jira issues (dry run)
+          cache: npm
+      - name: Install pinned repository dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify pipeline policy tests
+        run: node --test tests/ai-dev-intake.test.mjs tests/ai-dev-policy.test.mjs
+      - name: Select at most one opted-in Jira ticket
+        id: prepare
         env:
           JIRA_BASE_URL: ${{ vars.JIRA_BASE_URL }}
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-        run: node scripts/ai-dev/cli.mjs
+          AI_GITHUB_TOKEN: ${{ secrets.AI_GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ai-dev/prepare.mjs
+      - name: Stop after read-only dry run
+        if: steps.prepare.outputs.selected == 'true' && steps.prepare.outputs.mode != 'live'
+        run: echo 'Dry run completed. Jira, GitHub and deployment state were not changed.'
+      - name: Create isolated local branch
+        if: steps.prepare.outputs.selected == 'true' && steps.prepare.outputs.mode == 'live'
+        run: git switch -c "${{ steps.prepare.outputs.branch }}" origin/master
+      - name: Claim Jira ticket
+        if: steps.prepare.outputs.selected == 'true' && steps.prepare.outputs.mode == 'live'
+        env:
+          JIRA_BASE_URL: ${{ vars.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: node scripts/ai-dev/state.mjs claim
+      - name: Run isolated coding agent and bounded verification attempts
+        if: steps.prepare.outputs.selected == 'true' && steps.prepare.outputs.mode == 'live'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AI_MODEL: ${{ vars.AI_MODEL }}
+          AI_MAX_ATTEMPTS: ${{ vars.AI_MAX_ATTEMPTS }}
+        run: node scripts/ai-dev/execute.mjs
+      - name: Commit, push and create pull request
+        id: publish
+        if: steps.prepare.outputs.selected == 'true' && steps.prepare.outputs.mode == 'live'
+        env:
+          AI_GITHUB_TOKEN: ${{ secrets.AI_GITHUB_TOKEN }}
+          JIRA_BASE_URL: ${{ vars.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: node scripts/ai-dev/publish.mjs
+      - name: Record blocked run in Jira
+        if: failure() && steps.prepare.outputs.selected == 'true' && steps.prepare.outputs.mode == 'live'
+        continue-on-error: true
+        env:
+          JIRA_BASE_URL: ${{ vars.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: node scripts/ai-dev/state.mjs failure
