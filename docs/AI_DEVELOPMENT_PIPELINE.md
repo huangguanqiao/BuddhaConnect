@@ -1,5 +1,9 @@
 # BuddhaConnect autonomous AI development pipeline (BUD-25/26/27)
 
+## PARKED — owner decision (2026-10-19)
+
+The code is retained for possible future use, but **unattended AI development is intentionally disabled**. The intake workflow has **no schedule** and only supports a manually dispatched **dry run**. The reconciliation and UAT finalization workflows are gated by `AI_DEV_LIVE_ENABLED == 'true'`; keep that variable unset or `false`. Keep `AI_DEV_AUTO_MERGE_ENABLED` unset or `false`. Do not configure `GEMINI_API_KEY` or other automation credentials until a new owner-approved activation change. Re-enabling live execution requires a reviewed PR restoring an explicit entry point, plus an end-to-end low-risk test. Ordinary Codex Cloud tasks started manually remain independent.
+
 ## Delivery state
 
 The repository contains an opt-in Jira-to-UAT pipeline. It remains **dry-run by default**. Live mode processes at most one eligible `BUD` issue per run, creates an isolated branch and pull request, relies on the existing PR checks, and can merge only a narrowly classified low-risk PR. A successful merge is deployed by the existing GitHub Pages workflow; Jira moves to `In QA` only after that workflow succeeds and the UAT homepage returns HTML.
@@ -8,7 +12,7 @@ The pipeline never invokes `.github/workflows/release-prod.yml`, writes the `pro
 
 ## Execution flow
 
-1. `.github/workflows/ai-dev-intake.yml` runs hourly or manually. Schedules remain dry-run unless `AI_DEV_LIVE_ENABLED=true`.
+1. `.github/workflows/ai-dev-intake.yml` is currently **manual dry-run only**, with no schedule and no live dispatch option. A future approved activation PR would be required to enable unattended runs.
 2. Jira intake accepts only `BUD` Task/Bug/Story issues with `ai-ready`, status `To Do` or `Ready for AI`, a meaningful description, and no high-risk keywords. Open PR keys are excluded and the oldest eligible key wins.
 3. Live mode verifies all required credentials, transitions the ticket to `In Build`, records an English activity comment, and creates `ai/BUD-N-...` from current `master`.
 4. Pinned Gemini CLI runs headlessly with `auto_edit`, not shell-command approval. Its child environment contains the Gemini key but no GitHub or Jira credential. Checkout does not persist a Git credential.
