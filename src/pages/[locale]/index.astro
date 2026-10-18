@@ -1,0 +1,15 @@
+---
+import Base from '../../layouts/Base.astro';
+import {getCollection} from 'astro:content';
+import {LOCALES,LOCALE_PATHS,localePrefix,UI,localizedEntry} from '../../lib/site-i18n.mjs';
+import {publishedArticlesForLocale,articleUrl} from '../../lib/i18n.mjs';
+export function getStaticPaths(){return LOCALES.map(locale=>({params:{locale:LOCALE_PATHS[locale as keyof typeof LOCALE_PATHS]},props:{language:locale}}));}
+const {language}=Astro.props;
+const ui=UI[language as keyof typeof UI];
+const articles=publishedArticlesForLocale((await getCollection('articles')).map(localizedEntry),language).slice(0,6);
+---
+<Base locale={language} title={`${ui.home} · BuddhaConnect`}>
+ <section class="section"><div class="wrap"><p class="eyebrow">BUDDHACONNECT</p><h1 class="serif">{ui.intro}</h1><p><a href={localePrefix(language)+'/articles/'}>{ui.all} ↗</a></p></div></section>
+ <section class="section"><div class="wrap"><h2 class="serif">{ui.articles}</h2><div class="article-grid">{articles.map((article: any)=><a class="tile" href={articleUrl(article)}><h3>{article.title}</h3><p>{article.description}</p><span>{ui.read} ↗</span></a>)}</div>{articles.length===0&&<p>{ui.empty}</p>}</div></section>
+</Base>
+<style>.article-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:28px}.tile{padding:24px;border:1px solid #deded5}.tile h3{font-size:1.35rem;margin:10px 0}.tile p{line-height:1.8}.tile span{color:#315d4b}.section h1{font-size:clamp(2rem,4vw,3.5rem);max-width:800px}</style>

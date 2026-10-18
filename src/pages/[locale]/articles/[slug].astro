@@ -1,0 +1,21 @@
+---
+import Base from '../../../layouts/Base.astro';
+import {getCollection,render} from 'astro:content';
+import {LOCALES,localePrefix,UI,localizedEntry} from '../../../lib/site-i18n.mjs';
+import {publishedArticlesForLocale,articleUrl} from '../../../lib/i18n.mjs';
+export async function getStaticPaths(){
+ const entries=await getCollection('articles');
+ const all=entries.map(localizedEntry);
+ return entries.filter(e=>e.data.published).map(entry=>{
+  const a=localizedEntry(entry);
+  return {params:{locale:localePrefix(a.language).slice(1),slug:a.slug},props:{entry,all}};
+ });
+}
+const {entry,all}=Astro.props;const article=localizedEntry(entry);const language=article.language;
+const {Content}=await render(entry);const ui=UI[language as keyof typeof UI];
+const translations=LOCALES.map(locale=>({locale,entry:publishedArticlesForLocale(all,locale).find((a: any)=>a.articleId===article.articleId)}));
+---
+<Base locale={language} title={`${article.title} · BuddhaConnect`} description={article.description} articleId={article.articleId} translationLinks={translations.filter(t=>t.entry).map(t=>({locale:t.locale,url:articleUrl(t.entry)}))}>
+<article class="article wrap"><a href={localePrefix(language)+'/articles/'}>← {ui.back}</a><p class="eyebrow">{article.category}</p><h1 class="serif">{article.title}</h1><p>{article.description}</p><div class="prose"><Content/></div><nav aria-label="Translations">{translations.map(t=>t.entry?<a href={articleUrl(t.entry)} lang={t.locale}>{t.locale}</a>:<span title={ui.missing} aria-disabled="true">{t.locale} —</span>)}</nav></article>
+</Base>
+<style>.article{max-width:780px;padding-top:60px;padding-bottom:90px}.article h1{font-size:clamp(2rem,4vw,3.5rem);margin:30px 0}.prose{margin-top:40px;line-height:1.9}.article nav{display:flex;gap:18px;margin-top:60px;flex-wrap:wrap}.article nav span{opacity:.45}</style>
