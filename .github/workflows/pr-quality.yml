@@ -27,6 +27,10 @@ jobs:
           cache: npm
       - name: Install pinned dependencies
         run: npm ci --no-audit --no-fund
+      - name: Test deterministic quality validators
+        run: node --test tests/repository-quality.test.mjs
+      - name: Check Markdown and article structure
+        run: node scripts/check-repository.mjs
       - name: Validate Astro and TypeScript
         run: npm run check
       - name: Build static site
