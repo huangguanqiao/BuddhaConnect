@@ -1,21 +1,29 @@
 ---
 import Base from '../../../layouts/Base.astro';
-import {getCollection,render} from 'astro:content';
-import {LOCALES,localePrefix,UI,localizedEntry} from '../../../lib/site-i18n.mjs';
-import {publishedArticlesForLocale,articleUrl} from '../../../lib/i18n.mjs';
-export async function getStaticPaths(){
- const entries=await getCollection('articles');
- const all=entries.map(localizedEntry);
- return entries.filter(e=>e.data.published).map(entry=>{
-  const a=localizedEntry(entry);
-  return {params:{locale:localePrefix(a.language).slice(1),slug:a.slug},props:{entry,all}};
- });
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import { getCollection, render } from 'astro:content';
+import { LOCALES, UI, localizedEntry, localizedPath } from '../../../lib/site-i18n.mjs';
+import { publishedArticlesForLocale, articleUrl } from '../../../lib/i18n.mjs';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('articles');
+  const all = entries.map(localizedEntry);
+  return entries.filter((entry) => entry.data.published).map((entry) => {
+    const article = localizedEntry(entry);
+    return { params:{locale:articleUrl(article).split('/')[1],slug:article.slug}, props:{entry,all} };
+  });
 }
-const {entry,all}=Astro.props;const article=localizedEntry(entry);const language=article.language;
-const {Content}=await render(entry);const ui=UI[language as keyof typeof UI];
-const translations=LOCALES.map(locale=>({locale,entry:publishedArticlesForLocale(all,locale).find((a: any)=>a.articleId===article.articleId)}));
+const { entry, all } = Astro.props;
+const article = localizedEntry(entry); const language = article.language as keyof typeof UI; const ui = UI[language];
+const { Content } = await render(entry);
+const translations = LOCALES.map((locale:string) => publishedArticlesForLocale(all,locale).find((candidate:any) => candidate.articleId === article.articleId)).filter(Boolean).map((candidate:any) => ({locale:candidate.language,url:articleUrl(candidate)}));
+const date = new Intl.DateTimeFormat(language,{year:'numeric',month:'long',day:'numeric'}).format(article.date);
 ---
-<Base locale={language} title={`${article.title} · BuddhaConnect`} description={article.description} articleId={article.articleId} translationLinks={translations.filter(t=>t.entry).map(t=>({locale:t.locale,url:articleUrl(t.entry)}))}>
-<article class="article wrap"><a href={localePrefix(language)+'/articles/'}>← {ui.back}</a><p class="eyebrow">{article.category}</p><h1 class="serif">{article.title}</h1><p>{article.description}</p><div class="prose"><Content/></div><nav aria-label="Translations">{translations.map(t=>t.entry?<a href={articleUrl(t.entry)} lang={t.locale}>{t.locale}</a>:<span title={ui.missing} aria-disabled="true">{t.locale} —</span>)}</nav></article>
+<Base locale={language} title={`${article.title} · BuddhaConnect`} description={article.description} translationLinks={translations}>
+  <Breadcrumbs locale={language} items={[{label:ui.home,href:localizedPath(language)},{label:ui.articles,href:localizedPath(language,'articles')},{label:article.title}]}/>
+  <article class="article-shell wrap">
+    <header><p class="eyebrow">{article.category}</p><h1>{article.title}</h1><p class="article-lead">{article.description}</p><div class="article-meta"><time datetime={article.date.toISOString()}>{date}</time><span aria-hidden="true">·</span><span>{ui.editorial}</span></div></header>
+    <div class="article-layout"><div class="prose"><Content/></div><aside><div><p class="eyebrow">{ui.editorial}</p><p>{ui.editorialText}</p></div><a class="text-link" href={localizedPath(language,'articles')}>← {ui.back}</a></aside></div>
+  </article>
 </Base>
-<style>.article{max-width:780px;padding-top:60px;padding-bottom:90px}.article h1{font-size:clamp(2rem,4vw,3.5rem);margin:30px 0}.prose{margin-top:40px;line-height:1.9}.article nav{display:flex;gap:18px;margin-top:60px;flex-wrap:wrap}.article nav span{opacity:.45}</style>
+<style>.article-shell{padding:clamp(3.5rem,8vw,7rem) 0}.article-shell>header{max-width:54rem;margin:auto;text-align:center}.article-shell h1{margin:1rem 0 1.25rem;font:500 clamp(2.5rem,6vw,5rem)/1.25 var(--font-serif);letter-spacing:-.04em;text-wrap:balance}.article-lead{max-width:45rem;margin:auto;color:var(--muted);font-size:1.08rem;line-height:1.9}.article-meta{display:flex;justify-content:center;gap:.65rem;margin-top:1.5rem;color:var(--muted);font-size:.75rem}.article-layout{display:grid;grid-template-columns:minmax(0,45rem) 15rem;justify-content:center;gap:clamp(3rem,8vw,7rem);margin-top:clamp(3.5rem,8vw,6rem);padding-top:clamp(3rem,6vw,5rem);border-top:1px solid var(--line)}.article-layout aside{align-self:start;position:sticky;top:7rem}.article-layout aside>div{padding:1.2rem;border-left:2px solid var(--gold);background:var(--sand-50)}.article-layout aside p:not(.eyebrow){margin:.65rem 0 0;color:var(--muted);font-size:.78rem;line-height:1.7}.article-layout aside>a{margin-top:1.5rem}@media(max-width:800px){.article-layout{grid-template-columns:1fr}.article-layout aside{position:static;order:-1}}</style>

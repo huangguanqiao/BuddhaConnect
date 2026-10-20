@@ -1,0 +1,72 @@
+---
+import { LOCALE_NAMES, UI } from '../lib/site-i18n.mjs';
+type Locale = keyof typeof UI;
+interface Props { locale: Locale; links: Array<{locale:Locale;url:string;fallback?:boolean}> }
+const { locale, links } = Astro.props;
+const ui = UI[locale];
+---
+<div class="language-menu" data-language-menu>
+  <button class="language-trigger" type="button" aria-haspopup="menu" aria-expanded="false" data-language-trigger>
+    <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.4 2.5 3.6 5.5 3.6 9S14.4 18.5 12 21c-2.4-2.5-3.6-5.5-3.6-9S9.6 5.5 12 3Z"/></svg>
+    <span>{LOCALE_NAMES[locale]}</span>
+    <svg class="chevron" aria-hidden="true" viewBox="0 0 12 8"><path d="m1 1 5 5 5-5"/></svg>
+  </button>
+  <div class="language-popover" role="menu" aria-label={ui.language} hidden data-language-popover>
+    <p>{ui.language}</p>
+    {links.map((link: Props['links'][number]) => (
+      <a role="menuitem" href={link.url} lang={link.locale} hreflang={link.locale} aria-current={link.locale === locale ? 'page' : undefined} title={link.fallback ? ui.fallback : undefined}>
+        <span>{LOCALE_NAMES[link.locale]}</span>
+        {link.locale === locale && <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m3 8 3 3 7-7"/></svg>}
+        {link.fallback && link.locale !== locale && <span class="fallback-dot" aria-hidden="true">•</span>}
+      </a>
+    ))}
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-language-menu]').forEach((menu) => {
+    const trigger = menu.querySelector<HTMLButtonElement>('[data-language-trigger]');
+    const popover = menu.querySelector<HTMLElement>('[data-language-popover]');
+    const items = () => [...(popover?.querySelectorAll<HTMLAnchorElement>('[role="menuitem"]') ?? [])];
+    const close = (restore = false) => {
+      if (!trigger || !popover) return;
+      popover.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      if (restore) trigger.focus();
+    };
+    const open = (focus = false) => {
+      if (!trigger || !popover) return;
+      popover.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      if (focus) items()[0]?.focus();
+    };
+    trigger?.addEventListener('click', () => popover?.hidden ? open() : close());
+    trigger?.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault(); open(true);
+      }
+    });
+    popover?.addEventListener('keydown', (event) => {
+      const options = items();
+      const current = options.indexOf(document.activeElement as HTMLAnchorElement);
+      if (event.key === 'Escape') { event.preventDefault(); close(true); }
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        const step = event.key === 'ArrowDown' ? 1 : -1;
+        options[(current + step + options.length) % options.length]?.focus();
+      }
+      if (event.key === 'Home') { event.preventDefault(); options[0]?.focus(); }
+      if (event.key === 'End') { event.preventDefault(); options.at(-1)?.focus(); }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && popover && !popover.hidden) { event.preventDefault(); close(true); }
+    });
+    document.addEventListener('pointerdown', (event) => { if (!menu.contains(event.target as Node)) close(); });
+    menu.addEventListener('focusout', () => requestAnimationFrame(() => { if (!menu.contains(document.activeElement)) close(); }));
+  });
+</script>
+
+<style>
+  .language-menu{position:relative}.language-trigger{display:flex;align-items:center;gap:.5rem;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);padding:.55rem .75rem;cursor:pointer;font-size:.78rem;white-space:nowrap}.language-trigger:hover,.language-trigger:focus-visible{border-color:var(--pine);background:var(--sage-50)}.language-trigger svg{width:1rem;height:1rem;fill:none;stroke:currentColor;stroke-width:1.5}.language-trigger .chevron{width:.65rem}.language-popover{position:absolute;z-index:30;top:calc(100% + .65rem);right:0;width:13rem;padding:.55rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-lg)}.language-popover[hidden]{display:none}.language-popover p{margin:.2rem .65rem .45rem;color:var(--muted);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase}.language-popover a{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.7rem .65rem;border-radius:.5rem;font-size:.9rem}.language-popover a:hover,.language-popover a:focus-visible{background:var(--sage-50)}.language-popover a[aria-current=page]{font-weight:700;color:var(--pine)}.language-popover a svg{width:1rem;height:1rem;fill:none;stroke:currentColor;stroke-width:2}.fallback-dot{color:var(--gold);font-size:1.3rem;line-height:.5}
+  @media(max-width:420px){.language-trigger{padding:.6rem .7rem;font-size:.72rem}}
+</style>

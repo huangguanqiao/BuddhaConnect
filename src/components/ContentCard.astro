@@ -1,0 +1,13 @@
+---
+import { articleUrl } from '../lib/i18n.mjs';
+interface Props { article:any; label:string; locale:string; featured?:boolean }
+const { article, label, locale, featured = false } = Astro.props;
+const date = new Intl.DateTimeFormat(locale, { year:'numeric', month:'short', day:'numeric' }).format(new Date(article.date));
+---
+<article class:list={['content-card', { featured }]}>
+  <a href={articleUrl(article)} aria-label={`${article.title} — ${label}`}>
+    <div class="card-meta"><span>{article.category}</span><time datetime={new Date(article.date).toISOString()}>{date}</time></div>
+    <h3>{article.title}</h3><p>{article.description}</p><span class="card-link">{label}<i aria-hidden="true">↗</i></span>
+  </a>
+</article>
+<style>.content-card{height:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}.content-card:hover{transform:translateY(-3px);border-color:var(--sage-300);box-shadow:var(--shadow-md)}.content-card a{display:flex;height:100%;min-height:17rem;flex-direction:column;padding:clamp(1.35rem,3vw,2rem)}.card-meta{display:flex;justify-content:space-between;gap:1rem;color:var(--gold-dark);font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.card-meta time{color:var(--muted);font-weight:500;letter-spacing:0;text-transform:none}.content-card h3{margin:1.35rem 0 .7rem;font-family:var(--font-serif);font-size:clamp(1.3rem,2.3vw,1.75rem);font-weight:500;line-height:1.45}.content-card p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.8}.card-link{display:flex;align-items:center;gap:.4rem;margin-top:auto;padding-top:1.6rem;color:var(--pine);font-size:.82rem;font-weight:700}.card-link i{font-style:normal;transition:transform .2s}.content-card:hover .card-link i{transform:translate(.15rem,-.15rem)}.content-card.featured a{min-height:20rem}</style>

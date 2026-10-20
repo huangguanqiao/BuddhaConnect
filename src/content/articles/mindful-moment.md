@@ -3,6 +3,10 @@ title: 给自己三分钟的安静
 description: 不需要特别的场地，用三个简单步骤在日常中练习觉察。
 date: 2026-10-12
 category: 禅修生活
+articleId: mindful-moment
+language: zh-CN
+slug: mindful-moment
+section: practice
 ---
 我们不一定需要长时间静坐，才能开始练习觉察。
 

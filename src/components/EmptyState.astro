@@ -1,0 +1,5 @@
+---
+const { title, description, href, action } = Astro.props;
+---
+<div class="empty-state" role="status"><span aria-hidden="true">◌</span><h2>{title}</h2>{description && <p>{description}</p>}{href && action && <a class="text-link" href={href}>{action} <i aria-hidden="true">↗</i></a>}</div>
+<style>.empty-state{padding:clamp(2.5rem,7vw,5rem);border:1px dashed var(--sage-300);border-radius:var(--radius-lg);background:var(--sage-50);text-align:center}.empty-state>span{display:block;color:var(--gold);font-family:var(--font-serif);font-size:2.5rem}.empty-state h2{margin:.75rem 0;font:500 clamp(1.25rem,3vw,1.75rem)/1.4 var(--font-serif)}.empty-state p{max-width:36rem;margin:.5rem auto 1rem;color:var(--muted);line-height:1.75}</style>

@@ -29,7 +29,7 @@ export function translationUrl(articles, articleId, locale) {
 export function searchArticles(articles, locale, query) {
   const needle = String(query ?? '').trim().toLocaleLowerCase();
   return publishedArticlesForLocale(articles, locale).filter(a =>
-    !needle || [a.title, a.description, a.category].some(v=>String(v??'').toLocaleLowerCase().includes(needle))
+    !needle || [a.title, a.description, a.category, a.searchText].some(v=>String(v??'').toLocaleLowerCase().includes(needle))
   );
 }
 export function assertUniqueArticleLocales(articles) {

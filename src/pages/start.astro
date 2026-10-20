@@ -1,5 +1,4 @@
 ---
-import Base from '../layouts/Base.astro';import PageHeading from '../components/PageHeading.astro';
+import Redirect from '../components/Redirect.astro';
 ---
-<Base title="佛学入门 · BuddhaConnect"><PageHeading eyebrow="BEGIN YOUR JOURNEY" title="佛学入门" description="不需要预先知道答案。从基本概念、生活问题和简单的练习开始。"/><section class="section"><div class="wrap body"><p class="eyebrow">A GENTLE BEGINNING</p><h2 class="serif">认识佛教，从三个问题开始</h2><div class="cards"><div class="tile"><span>01</span><h3 class="serif">佛教关心什么？</h3><p>从苦与解脱出发，理解佛教为何重视对生活经验的观察。</p></div><div class="tile"><span>02</span><h3 class="serif">什么是无常？</h3><p>认识变化，并学习如何与生活中的不确定相处。</p></div><div class="tile"><span>03</span><h3 class="serif">如何开始实践？</h3><p>从善意、觉察和日常的小行动开始，而不是追求完美。</p></div></div><a class="button" href="/articles/what-is-buddhism/">阅读第一篇入门文章 ↗</a></div></section></Base>
-<style>.body{text-align:center}.body h2{font-size:2.4rem;font-weight:500;margin:16px 0 40px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:40px;text-align:left}.cards span{color:#a38a62}.cards h3{font-size:1.5rem;font-weight:500;margin:22px 0}.cards p{line-height:1.9;color:#6b7b70}@media(max-width:800px){.cards{grid-template-columns:1fr}}</style>
+<Redirect to="/zh/start/" title="从这里开始 · BuddhaConnect" />

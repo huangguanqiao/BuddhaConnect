@@ -1,6 +1,4 @@
 ---
-import Base from '../layouts/Base.astro';import PageHeading from '../components/PageHeading.astro';
-const terms=[{name:'无常',en:'Anitya / Anicca',text:'一切依赖条件形成的事物都在变化。'},{name:'缘起',en:'Pratītyasamutpāda',text:'现象依赖多种条件而生起，并非孤立存在。'},{name:'慈悲',en:'Karuṇā',text:'理解他人的苦，并愿意帮助减轻痛苦。'},{name:'正念',en:'Smṛti / Sati',text:'对当下经验保持清楚、持续的觉察。'}];
+import Redirect from '../components/Redirect.astro';
 ---
-<Base title="佛教词典 · BuddhaConnect"><PageHeading eyebrow="GLOSSARY" title="佛教词典" description="用简洁的说明，认识佛教常见词语。不同传统的解释可能有所差异。"/><section class="section"><div class="wrap terms">{terms.map(term=><article class="tile"><p class="eyebrow">{term.en}</p><h2 class="serif">{term.name}</h2><p>{term.text}</p></article>)}</div></section></Base>
-<style>.terms{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.terms h2{font-size:2rem;font-weight:500;margin:18px 0}.terms article p:last-child{line-height:1.9;color:#6b7b70}@media(max-width:700px){.terms{grid-template-columns:1fr}}</style>
+<Redirect to="/zh/teachings/" title="佛法教义 · BuddhaConnect" />

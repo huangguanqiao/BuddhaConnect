@@ -4,7 +4,7 @@ import {articleIdentity,articleUrl,searchArticles,translationUrl,assertUniqueArt
 const entries=[
  {articleId:'ART-1',language:'zh-CN',slug:'sidi',title:'四圣谛',published:true},
  {articleId:'ART-1',language:'en',slug:'four-truths',title:'Four Noble Truths',published:true},
- {articleId:'ART-2',language:'en',slug:'english-only',title:'English only',published:true},
+ {articleId:'ART-2',language:'en',slug:'english-only',title:'English only',searchText:'body phrase',published:true},
  {articleId:'ART-3',language:'zh-CN',slug:'draft',title:'未发布',published:false},
 ];
 test('same Article ID may have different locales',()=>assert.notEqual(articleIdentity('ART-1','en'),articleIdentity('ART-1','zh-CN')));
@@ -21,3 +21,4 @@ test('duplicate article-locale pairs fail closed',()=>{
  assert.equal(assertUniqueArticleLocales(entries),true);
 });
 test('article route is localized',()=>assert.equal(articleUrl(entries[0]),'/zh/articles/sidi/'));
+test('search can match indexed article text',()=>assert.deepEqual(searchArticles(entries,'en','body phrase').map(a=>a.articleId),['ART-2']));

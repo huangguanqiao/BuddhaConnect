@@ -1,0 +1,5 @@
+---
+const { eyebrow, title, description, compact = false } = Astro.props;
+---
+<section class:list={['page-hero', { compact }]}><div class="wrap"><p class="eyebrow">{eyebrow}</p><h1>{title}</h1><p class="lead">{description}</p><slot /></div></section>
+<style>.page-hero{padding:clamp(4.5rem,9vw,8rem) 0 clamp(3.5rem,7vw,6rem);background:linear-gradient(140deg,var(--sage-50),var(--sand-50))}.page-hero.compact{padding-block:3.25rem}.page-hero h1{max-width:58rem;margin:.9rem 0 1.2rem;font-family:var(--font-serif);font-size:clamp(2.5rem,5.5vw,5.2rem);font-weight:500;line-height:1.18;letter-spacing:-.035em;text-wrap:balance}.page-hero.compact h1{font-size:clamp(2.25rem,4.5vw,4rem)}.lead{max-width:46rem;margin:0;color:var(--muted);font-size:clamp(1rem,1.8vw,1.16rem);line-height:1.9}</style>
